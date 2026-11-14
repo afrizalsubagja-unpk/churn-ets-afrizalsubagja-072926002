@@ -5,7 +5,9 @@ from typing import Dict, List, Tuple
 import pandas as pd
 import streamlit as st
 
-# Daftar kolom wajib sesuai metodologi panduan DigitalSkola
+DEFAULT_DATA_PATH = "data/Dataset1_Customer_Churn.csv"
+
+# Daftar 7 kolom wajib pada Dataset1_Customer_Churn.csv
 REQUIRED_COLUMNS: List[str] = [
     "CustomerId",
     "Gender",
@@ -40,12 +42,9 @@ COLUMN_DESCRIPTIONS: Dict[str, Tuple[str, str]] = {
 }
 
 
-def load_raw_dataset(filepath: str = "data/Churn_Modelling.csv") -> Tuple[pd.DataFrame, List[str]]:
+def load_raw_dataset(filepath: str = DEFAULT_DATA_PATH) -> pd.DataFrame:
     """
-    Memuat dataset dari file CSV, memvalidasi kolom wajib, dan hanya menyisakan
-    7 kolom wajib sesuai panduan analisis.
-
-    Mengembalikan tuple: (DataFrame dengan 7 kolom wajib, daftar kolom lain yang diabaikan).
+    Memuat dataset dari file CSV dan memvalidasi keberadaan 7 kolom wajib.
     """
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"File dataset tidak ditemukan pada jalur: '{filepath}'.")
@@ -59,13 +58,11 @@ def load_raw_dataset(filepath: str = "data/Churn_Modelling.csv") -> Tuple[pd.Dat
             f"Kolom wajib berikut tidak ditemukan di dalam dataset '{filepath}': {', '.join(missing_cols)}"
         )
 
-    ignored_cols = [col for col in df_full.columns if col not in REQUIRED_COLUMNS]
-    df_selected = df_full[REQUIRED_COLUMNS].copy()
-    return df_selected, ignored_cols
+    return df_full[REQUIRED_COLUMNS].copy()
 
 
 @st.cache_data(show_spinner=False)
-def get_validated_data(filepath: str = "data/Churn_Modelling.csv") -> Tuple[pd.DataFrame, List[str]]:
+def get_validated_data(filepath: str = DEFAULT_DATA_PATH) -> pd.DataFrame:
     """
     Fungsi ter-cache untuk memuat data di Streamlit.
     Jika file hilang atau kolom wajib kurang, tampilkan st.error dan hentikan aplikasi dengan st.stop().
@@ -75,7 +72,7 @@ def get_validated_data(filepath: str = "data/Churn_Modelling.csv") -> Tuple[pd.D
     except FileNotFoundError as err:
         st.error(
             f"🚨 **File Dataset Tidak Ditemukan!**\n\n{err}\n\n"
-            "Pastikan file `data/Churn_Modelling.csv` tersedia di dalam repositori proyek."
+            f"Pastikan file `{DEFAULT_DATA_PATH}` tersedia di dalam repositori proyek."
         )
         st.stop()
     except ValueError as err:
@@ -104,7 +101,6 @@ def encode_data(df_prep: pd.DataFrame) -> pd.DataFrame:
     sehingga terbentuk kolom Gender_Male (1 = Male, 0 = Female).
     """
     df_encoded = pd.get_dummies(df_prep, drop_first=True)
-    # Pastikan tipe boolean hasil get_dummies dikonversi ke integer (0/1) agar konsisten di semua versi pandas
     for col in df_encoded.select_dtypes(include=["bool"]).columns:
         df_encoded[col] = df_encoded[col].astype(int)
     return df_encoded
@@ -155,6 +151,8 @@ def compute_kpi_summary(df: pd.DataFrame) -> Dict[str, float]:
     avg_credit_score = float(df["CreditScore"].mean())
     avg_salary = float(df["EstimatedSalary"].mean())
     cr_card_pct = float((df["HasCrCard"] == 1).mean() * 100.0)
+    duplicate_rows = int(df.duplicated().sum())
+    missing_values = int(df.isnull().sum().sum())
 
     return {
         "total_customers": total_customers,
@@ -166,4 +164,6 @@ def compute_kpi_summary(df: pd.DataFrame) -> Dict[str, float]:
         "avg_credit_score": avg_credit_score,
         "avg_salary": avg_salary,
         "cr_card_pct": cr_card_pct,
+        "duplicate_rows": duplicate_rows,
+        "missing_values": missing_values,
     }

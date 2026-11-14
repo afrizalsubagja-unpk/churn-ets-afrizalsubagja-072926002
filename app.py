@@ -1,6 +1,7 @@
 """
 Aplikasi Web Streamlit: Bank Customer Churn Analytics
-Mereplikasi alur analisis panduan Final Project "Bank Customer Churn" (Datamine Team, DigitalSkola).
+Mereplikasi alur analisis panduan Final Project "Bank Customer Churn" (Datamine Team, DigitalSkola)
+menggunakan dataset data/Dataset1_Customer_Churn.csv.
 """
 
 import pandas as pd
@@ -19,6 +20,7 @@ from utils.charts import (
 )
 from utils.data import (
     COLUMN_DESCRIPTIONS,
+    DEFAULT_DATA_PATH,
     REQUIRED_COLUMNS,
     compute_kpi_summary,
     encode_data,
@@ -56,9 +58,9 @@ st.set_page_config(
 apply_custom_style()
 
 # ---------------------------------------------------------------------------
-# PEMUATAN DATA & VALIDASI KOLOM WAJIB
+# PEMUATAN DATA & VALIDASI KOLOM WAJIB (data/Dataset1_Customer_Churn.csv)
 # ---------------------------------------------------------------------------
-df_raw, ignored_columns = get_validated_data("data/Churn_Modelling.csv")
+df_raw = get_validated_data(DEFAULT_DATA_PATH)
 kpi_summary = compute_kpi_summary(df_raw)
 
 # Tahapan pemrosesan sesuai urutan panduan
@@ -70,27 +72,27 @@ df_fe = engineer_features(df_encoded)
 pipeline_bundle, metrics_payload = load_or_train_artifacts(df_raw)
 
 # ---------------------------------------------------------------------------
-# NAVIGASI SIDEBAR (8 HALAMAN SESUAI URUTAN PANDUAN)
+# NAVIGASI SIDEBAR (8 HALAMAN SESUAI REVISI)
 # ---------------------------------------------------------------------------
 MENU_OPTIONS = [
-    "1. Business Understanding",
-    "2. Data Understanding",
-    "3. Data Preparation",
-    "4. Exploratory Data Analysis",
-    "5. Modelling & Evaluation",
-    "6. Kesimpulan & Saran",
-    "7. Prediksi Nasabah",
+    "1. Beranda",
+    "2. Data Understanding & Preparation",
+    "3. Exploratory Data Analysis",
+    "4. Modelling & Evaluasi",
+    "5. Feature Importance",
+    "6. Prediksi Nasabah",
+    "7. Kesimpulan & Rekomendasi",
     "8. Tentang",
 ]
 
 MENU_ICONS = [
-    "briefcase-fill",
+    "house-door-fill",
     "table",
-    "sliders",
     "bar-chart-line-fill",
     "cpu-fill",
-    "check2-circle",
+    "Award-fill" if False else "diagram-3-fill",
     "person-check-fill",
+    "check2-circle",
     "info-circle-fill",
 ]
 
@@ -121,7 +123,7 @@ with st.sidebar:
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": COLORS["gold"], "font-size": "15px"},
             "nav-link": {
-                "font-size": "13.5px",
+                "font-size": "13.2px",
                 "text-align": "left",
                 "margin": "3px 0px",
                 "padding": "9px 12px",
@@ -141,10 +143,11 @@ with st.sidebar:
         f"""
         <div style="margin-top: 1.2rem; padding: 0.85rem; background: rgba(255,255,255,0.06); border-radius: 10px; font-size: 0.78rem;">
             <div style="font-weight: 700; color: {COLORS['gold']} !important; margin-bottom: 0.35rem;">
-                📌 Ringkasan Cepat Dataset
+                📌 Ringkasan Dataset Aktif
             </div>
+            <div>• File: <code>Dataset1_Customer_Churn.csv</code></div>
             <div>• Total Data: <b>{kpi_summary['total_customers']:,}</b> baris</div>
-            <div>• Kolom Aktif: <b>{len(REQUIRED_COLUMNS)}</b> kolom wajib</div>
+            <div>• Jumlah Kolom: <b>{len(REQUIRED_COLUMNS)}</b> kolom</div>
             <div>• Churn Rate: <b>{kpi_summary['churn_rate']:.2f}%</b></div>
             <div>• Model Terbaik: <b>{metrics_payload['best_overall']['model_name']}</b></div>
         </div>
@@ -154,19 +157,19 @@ with st.sidebar:
 
 
 # ===========================================================================
-# HALAMAN 1: BUSINESS UNDERSTANDING
+# HALAMAN 1: BERANDA (BUSINESS UNDERSTANDING & KPI CARDS)
 # ===========================================================================
-if selected_page == "1. Business Understanding":
+if selected_page == "1. Beranda":
     render_page_header(
-        title="1. Business Understanding",
+        title="1. Beranda — Business Understanding",
         subtitle=(
-            "Memahami konteks bisnis perbankan, dampak finansial dari penutupan rekening (churn), "
-            "serta penetapan tiga tujuan strategis analisis data."
+            "Ringkasan eksekutif indikator kinerja utama (KPI) populasi nasabah, latar belakang masalah penutupan "
+            "rekening (churn), serta tiga tujuan utama analisis data perbankan."
         ),
-        badge="Tahap 1 • Pemahaman Bisnis",
+        badge="Tahap 1 • Beranda & Pemahaman Bisnis",
     )
 
-    # Baris KPI Utama sesuai spesifikasi halaman awal
+    # Baris KPI Utama (Total Nasabah, Jumlah Churn, Churn Rate, Rata-rata Usia, Rata-rata CreditScore)
     render_section_title("Indikator Kinerja Utama (KPI) Populasi Nasabah")
     render_top_kpi_row(kpi_summary)
 
@@ -185,8 +188,8 @@ if selected_page == "1. Business Understanding":
                     secara signifikan dan menghambat laju pertumbuhan bisnis jangka panjang.
                 </p>
                 <p style="margin-top: 0.7rem;">
-                    Berdasarkan data aktual sebanyak <b>{kpi_summary['total_customers']:,} nasabah</b>, tercatat sejumlah
-                    <b style="color:{COLORS['danger']};">{kpi_summary['churn_count']:,} nasabah ({kpi_summary['churn_rate']:.2f}%)</b>
+                    Berdasarkan data aktual pada <code>{DEFAULT_DATA_PATH}</code> sebanyak <b>{kpi_summary['total_customers']:,} nasabah</b>,
+                    tercatat sejumlah <b style="color:{COLORS['danger']};">{kpi_summary['churn_count']:,} nasabah ({kpi_summary['churn_rate']:.2f}%)</b>
                     telah menutup rekeningnya (<i>Exited = 1</i>), sementara
                     <b style="color:{COLORS['teal']};">{kpi_summary['retained_count']:,} nasabah ({kpi_summary['retained_rate']:.2f}%)</b>
                     tetap bertahan (<i>Exited = 0</i>). Biaya akuisisi nasabah baru di industri perbankan jauh lebih tinggi
@@ -200,15 +203,17 @@ if selected_page == "1. Business Understanding":
     with col_bg2:
         avg_age_churn = float(df_raw[df_raw["Exited"] == 1]["Age"].mean())
         avg_age_ret = float(df_raw[df_raw["Exited"] == 0]["Age"].mean())
+        female_rate = float(df_raw[df_raw["Gender"] == "Female"]["Exited"].mean() * 100.0)
+        male_rate = float(df_raw[df_raw["Gender"] == "Male"]["Exited"].mean() * 100.0)
         st.markdown(
             f"""
             <div class="info-card" style="border-left: 4px solid {COLORS['gold']};">
-                <h4>📊 Potret Awal Risiko Churn dari Data</h4>
+                <h4>📊 Potret Awal Risiko Churn dari Data Aktual</h4>
                 <p>
-                    • <b>Rasio Ketidakseimbangan Kelas:</b> Sekitar <b>{kpi_summary['retained_rate']:.1f}% : {kpi_summary['churn_rate']:.1f}%</b>
-                    antara nasabah bertahan dan <i>churn</i>.<br>
-                    • <b>Usia Rata-rata Nasabah Churn:</b> <b>{avg_age_churn:.1f} tahun</b> (lebih tinggi dibandingkan nasabah bertahan yaitu <b>{avg_age_ret:.1f} tahun</b>).<br>
-                    • <b>Kepemilikan Kartu Kredit:</b> <b>{kpi_summary['cr_card_pct']:.1f}%</b> nasabah memiliki kartu kredit.<br>
+                    • <b>Rasio Kelas Target:</b> <b>{kpi_summary['retained_rate']:.2f}% Bertahan</b> vs <b>{kpi_summary['churn_rate']:.2f}% Churn</b>.<br>
+                    • <b>Usia Rata-rata Nasabah Churn:</b> <b>{avg_age_churn:.1f} tahun</b> (lebih tua dibandingkan nasabah bertahan yaitu <b>{avg_age_ret:.1f} tahun</b>).<br>
+                    • <b>Churn Rate per Gender:</b> Perempuan <b>{female_rate:.2f}%</b> vs Laki-laki <b>{male_rate:.2f}%</b>.<br>
+                    • <b>Kepemilikan Kartu Kredit:</b> <b>{kpi_summary['cr_card_pct']:.2f}%</b> nasabah memiliki kartu kredit.<br>
                     • <b>Rata-rata Gaji Tahunan:</b> <b>${kpi_summary['avg_salary']:,.2f}</b>.
                 </p>
             </div>
@@ -225,9 +230,9 @@ if selected_page == "1. Business Understanding":
             <div class="info-card" style="border-top: 4px solid {COLORS['navy']}; height: 100%;">
                 <h4>🎯 Objective (a): Faktor Pendorong Churn</h4>
                 <p>
-                    Mengidentifikasi <b>faktor atau atribut apa yang paling penting dan berpengaruh</b> dalam menyebabkan
-                    tingginya tingkat <i>churn</i> nasabah melalui analisis korelasi, rekayasa fitur (<i>Feature Engineering</i>),
-                    dan <i>Feature Importance</i> model.
+                    Mengidentifikasi <b>faktor atau atribut apa yang paling memengaruhi tingginya tingkat <i>churn</i></b>
+                    nasabah melalui analisis eksplorasi proporsi kategori, matriks korelasi, rekayasa fitur
+                    (<code>Credit Score Given Age</code>), serta evaluasi <i>Feature Importance</i>.
                 </p>
             </div>
             """,
@@ -240,8 +245,8 @@ if selected_page == "1. Business Understanding":
                 <h4>🤖 Objective (b): Model Prediksi Paling Akurat</h4>
                 <p>
                     Membandingkan performa empat algoritma klasifikasi (<i>Gradient Boosting, KNN, Random Forest, Decision Tree</i>)
-                    baik <b>sebelum maupun sesudah SMOTE</b> untuk menentukan model mana yang paling akurat dan andal
-                    memprediksi nasabah yang akan <i>churn</i>.
+                    baik <b>sebelum maupun sesudah SMOTE</b> pada data uji untuk menentukan model mana yang paling akurat dan sensitif
+                    memprediksi nasabah <i>churn</i>.
                 </p>
             </div>
             """,
@@ -253,65 +258,41 @@ if selected_page == "1. Business Understanding":
             <div class="info-card" style="border-top: 4px solid {COLORS['gold']}; height: 100%;">
                 <h4>📈 Objective (c): Strategi Pertumbuhan Bisnis</h4>
                 <p>
-                    Merumuskan bagaimana perusahaan/bank dapat <b>memanfaatkan hasil analisis dan model prediktif ini</b>
-                    untuk menyusun kampanye retensi yang tepat sasaran, menekan laju <i>churn</i>, dan meningkatkan
-                    pertumbuhan profit bisnis.
+                    Merumuskan bagaimana bank dapat <b>memanfaatkan hasil analisis dan model prediktif ini</b> untuk menyusun
+                    program retensi terfokus pada segmen berisiko tinggi, menekan kehilangan nasabah, dan meningkatkan
+                    pertumbuhan bisnis.
                 </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    # Alur Metodologi Panduan
-    render_section_title("Alur Metodologi Analisis (Panduan Final Project DigitalSkola)")
-    st.markdown(
-        """
-        <div class="info-card">
-            <p>
-                Aplikasi ini mereplikasi secara presisi setiap tahapan pada panduan <b>Final Project "Bank Customer Churn" (Datamine Team, DigitalSkola)</b>:
-                dimulai dari <b>(1) Business Understanding</b> ➔ <b>(2) Data Understanding</b> (7 kolom wajib) ➔
-                <b>(3) Data Preparation</b> (penghapusan <code>CustomerId</code>, pengecekan <i>missing value</i> & statistik deskriptif) ➔
-                <b>(4) Exploratory Data Analysis</b> (visualisasi kategorikal, kontinu, <i>One-Hot Encoding</i>, dan rekayasa fitur <code>Credit Score Given Age</code>) ➔
-                <b>(5) Modelling & Evaluation</b> (perbandingan 4 model sebelum & sesudah <i>SMOTE</i> pada data <i>test</i>) ➔
-                <b>(6) Kesimpulan, Rekomendasi & Eksperimen Rasio SMOTE 60:40</b> ➔ hingga <b>(7) Simulasi Prediksi Nasabah Baru</b>.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
 
 # ===========================================================================
-# HALAMAN 2: DATA UNDERSTANDING
+# HALAMAN 2: DATA UNDERSTANDING & PREPARATION
 # ===========================================================================
-elif selected_page == "2. Data Understanding":
+elif selected_page == "2. Data Understanding & Preparation":
     render_page_header(
-        title="2. Data Understanding",
+        title="2. Data Understanding & Data Preparation",
         subtitle=(
-            "Eksplorasi struktur awal dataset, dimensi baris dan kolom, cuplikan tabel data (head), "
-            "serta kamus deskripsi ketujuh variabel wajib."
+            "Eksplorasi struktur dataset Dataset1_Customer_Churn.csv (head, info, deskripsi 7 kolom), pemeriksaan "
+            "missing value & duplikat, statistik deskriptif numerik/kategorikal, serta penghapusan CustomerId."
         ),
-        badge="Tahap 2 • Pemahaman Data",
+        badge="Tahap 2 • Pemahaman & Persiapan Data",
     )
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         render_kpi_card("Jumlah Baris Data", f"{len(df_raw):,}", "Observasi nasabah bank", "navy")
     with c2:
-        render_kpi_card("Jumlah Kolom Wajib", f"{len(df_raw.columns)}", "Sesuai metodologi panduan", "teal")
+        render_kpi_card("Jumlah Kolom", f"{len(df_raw.columns)} Kolom", "6 kolom setelah drop CustomerId", "teal")
     with c3:
-        render_kpi_card("Fitur Prediktor Awal", "5 Fitur", "Di luar CustomerId & Exited", "blue")
+        render_kpi_card("Missing Value", f"{kpi_summary['missing_values']}", "Tidak ada nilai kosong (0%)", "blue")
     with c4:
-        render_kpi_card("Variabel Target", "Exited (0 / 1)", f"Churn: {kpi_summary['churn_count']:,} baris", "danger")
+        render_kpi_card("Data Duplikat", f"{kpi_summary['duplicate_rows']}", "Seluruh baris unik (100%)", "gold")
 
-    if ignored_columns:
-        st.info(
-            f"ℹ️ **Catatan Metodologi Panduan:** File sumber memiliki kolom tambahan "
-            f"(`{', '.join(ignored_columns)}`), namun kolom-kolom tersebut **diabaikan secara otomatis** agar analisis "
-            f"mengikuti secara ketat 7 kolom wajib pada panduan Final Project DigitalSkola."
-        )
-
-    render_section_title("Cuplikan Data Awal — df.head()")
+    # 1. Tabel head() dan Deskripsi Tiap Kolom
+    render_section_title("1. Cuplikan Tabel Data Awal — df.head() & Deskripsi 7 Kolom")
     num_rows_preview = st.slider(
         "Pilih jumlah baris awal yang ingin ditampilkan:",
         min_value=5,
@@ -321,7 +302,6 @@ elif selected_page == "2. Data Understanding":
     )
     st.dataframe(df_raw.head(num_rows_preview), use_container_width=True, hide_index=False)
 
-    render_section_title("Kamus Data & Deskripsi Tiap Kolom")
     desc_rows = []
     for col_name in REQUIRED_COLUMNS:
         col_type, col_desc = COLUMN_DESCRIPTIONS.get(col_name, ("-", "-"))
@@ -331,99 +311,53 @@ elif selected_page == "2. Data Understanding":
             {
                 "Nama Kolom": col_name,
                 "Tipe Data (dtype)": str(df_raw[col_name].dtype),
-                "Kategori Variabel": col_type,
+                "Jenis Variabel": col_type,
                 "Contoh Nilai": sample_str,
-                "Deskripsi Bisnis": col_desc,
+                "Deskripsi Kolom": col_desc,
             }
         )
     st.dataframe(pd.DataFrame(desc_rows), use_container_width=True, hide_index=True)
 
-    render_section_title("Distribusi Nilai Unik per Kolom")
-    uniq_cols = st.columns(2)
-    with uniq_cols[0]:
-        gender_dist = df_raw["Gender"].value_counts().reset_index()
-        gender_dist.columns = ["Gender", "Jumlah Nasabah"]
-        gender_dist["Persentase (%)"] = (gender_dist["Jumlah Nasabah"] / len(df_raw) * 100).round(2)
-        st.markdown("**Distribusi Variabel `Gender`:**")
-        st.dataframe(gender_dist, use_container_width=True, hide_index=True)
-    with uniq_cols[1]:
-        card_dist = df_raw["HasCrCard"].value_counts().reset_index()
-        card_dist.columns = ["HasCrCard", "Jumlah Nasabah"]
-        card_dist["Keterangan"] = card_dist["HasCrCard"].map({1: "Punya Kartu Kredit", 0: "Tidak Punya Kartu Kredit"})
-        card_dist["Persentase (%)"] = (card_dist["Jumlah Nasabah"] / len(df_raw) * 100).round(2)
-        st.markdown("**Distribusi Variabel `HasCrCard`:**")
-        st.dataframe(card_dist[["HasCrCard", "Keterangan", "Jumlah Nasabah", "Persentase (%)"]], use_container_width=True, hide_index=True)
-
-
-# ===========================================================================
-# HALAMAN 3: DATA PREPARATION
-# ===========================================================================
-elif selected_page == "3. Data Preparation":
-    render_page_header(
-        title="3. Data Preparation",
-        subtitle=(
-            "Pembersihan atribut yang tidak relevan (drop CustomerId), pemeriksaan tipe data df.info(), "
-            "verifikasi missing values df.isnull().sum(), serta statistik deskriptif numerik dan kategorikal."
-        ),
-        badge="Tahap 3 • Persiapan Data",
-    )
-
-    render_section_title("1. Penghapusan Kolom Tidak Relevan — df.drop('CustomerId')")
+    # 2. Penjelasan alasan CustomerId di-drop
+    render_section_title("2. Data Preparation: Penghapusan Kolom CustomerId — df.drop('CustomerId')")
     col_p1, col_p2 = st.columns([1.2, 1])
     with col_p1:
         st.markdown(
             f"""
             <div class="info-card">
-                <h4>🧹 Mengapa <code>CustomerId</code> Dihapus?</h4>
+                <h4>🧹 Mengapa Kolom <code>CustomerId</code> Dihapus Sebelum Modeling?</h4>
                 <p>
-                    Kolom <code>CustomerId</code> merupakan pengidentifikasi unik setiap nasabah yang bersifat administratif
-                    dan tidak memiliki hubungan kausal maupun informasi perilaku terhadap keputusan nasabah menutup rekening (<i>churn</i>).
-                    Menyertakan kolom ID unik ke dalam pelatihan model dapat memicu <i>overfitting</i> (model menghafal ID).
+                    Kolom <code>CustomerId</code> berisi nomor identitas unik untuk setiap nasabah (terdapat
+                    <b>{df_raw['CustomerId'].nunique():,} nilai unik</b> dari {len(df_raw):,} baris). Atribut ini bersifat administratif
+                    semata dan tidak memiliki makna perilaku maupun hubungan kausal terhadap keputusan nasabah menutup rekening (<i>churn</i>).
                 </p>
                 <p style="margin-top:0.6rem;">
-                    • <b>Kolom Sebelum Drop ({len(df_raw.columns)} kolom):</b> <code>{', '.join(df_raw.columns)}</code><br>
-                    • <b>Kolom Sesudah Drop ({len(df_prep.columns)} kolom):</b> <code>{', '.join(df_prep.columns)}</code>
+                    Apabila <code>CustomerId</code> dimasukkan ke dalam model <i>Machine Learning</i>, algoritma pohon keputusan dapat
+                    menghafal nomor ID tertentu (<i>overfitting</i>) dan menurunkan kemampuan generalisasi pada nasabah baru.<br><br>
+                    • <b>Kolom Awal ({len(df_raw.columns)} kolom):</b> <code>{', '.join(df_raw.columns)}</code><br>
+                    • <b>Kolom Setelah Preparation ({len(df_prep.columns)} kolom):</b> <code>{', '.join(df_prep.columns)}</code>
                 </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
     with col_p2:
-        st.markdown("**Cuplikan 5 Baris Pertama Setelah Drop `CustomerId`:**")
-        st.dataframe(df_prep.head(5), use_container_width=True)
+        st.markdown("**Cuplikan Data Setelah `CustomerId` Dihapus (`df_prep.head()`):**")
+        st.dataframe(df_prep.head(6), use_container_width=True)
 
-    render_section_title("2. Informasi Tipe Data & Pengecekan Missing Value — df.info() & df.isnull().sum()")
+    # 3. Struktur info() & Cek Missing Value
+    render_section_title("3. Pemeriksaan Tipe Data (df.info()) & Missing Value (df.isnull().sum())")
     info_df = get_info_dataframe(df_prep)
-    total_nulls = int(df_prep.isnull().sum().sum())
-
-    m1, m2, m3 = st.columns(3)
-    with m1:
-        render_kpi_card("Total Missing Value", f"{total_nulls}", "Dari seluruh 6 kolom aktif", "teal")
-    with m2:
-        render_kpi_card(
-            "Kolom Numerik",
-            f"{len(df_prep.select_dtypes(include=['number']).columns)} Kolom",
-            "Age, CreditScore, EstimatedSalary, HasCrCard, Exited",
-            "navy",
-        )
-    with m3:
-        render_kpi_card(
-            "Kolom Kategorikal",
-            f"{len(df_prep.select_dtypes(include=['object']).columns)} Kolom",
-            "Gender (Female / Male)",
-            "gold",
-        )
-
     st.dataframe(info_df, use_container_width=True, hide_index=True)
+    render_insight_box(
+        f"Seluruh <b>{len(df_prep.columns)} kolom aktif</b> pada <b>{len(df_prep):,} baris data</b> memiliki "
+        f"<b>0 missing value</b> (<code>isnull().sum() = 0</code>) dan <b>0 baris duplikat</b>, terdiri dari 5 kolom numerik "
+        f"(<code>Age, CreditScore, EstimatedSalary, HasCrCard, Exited</code>) serta 1 kolom kategorikal (<code>Gender</code>)."
+    )
 
-    if total_nulls == 0:
-        render_insight_box(
-            f"Hasil pemeriksaan <code>df.isnull().sum()</code> menunjukkan <b>0 missing value</b> pada seluruh "
-            f"{len(df_prep):,} baris dan {len(df_prep.columns)} kolom, sehingga tidak diperlukan imputasi nilai kosong."
-        )
-
-    render_section_title("3. Statistik Deskriptif — df.describe()")
-    tab_num, tab_cat = st.tabs(["🔢 Statistik Numerik (describe)", "🔤 Statistik Kategorikal (include='object')"])
+    # 4. Statistik Deskriptif Numerik & Kategorikal
+    render_section_title("4. Statistik Deskriptif Numerik & Kategorikal — df.describe()")
+    tab_num, tab_cat = st.tabs(["🔢 Statistik Numerik (df.describe())", "🔤 Statistik Kategorikal (include='object')"])
     with tab_num:
         desc_num = df_prep.describe().T.reset_index().rename(columns={"index": "Atribut Numerik"})
         for c in ["mean", "std", "min", "25%", "50%", "75%", "max"]:
@@ -431,37 +365,39 @@ elif selected_page == "3. Data Preparation":
                 desc_num[c] = desc_num[c].round(2)
         st.dataframe(desc_num, use_container_width=True, hide_index=True)
         render_insight_box(
-            f"Rentang <b>CreditScore</b> berada pada <b>{int(df_prep['CreditScore'].min())} – {int(df_prep['CreditScore'].max())}</b> "
-            f"(rata-rata <b>{df_prep['CreditScore'].mean():.2f}</b>), rentang <b>Age</b> antara "
-            f"<b>{int(df_prep['Age'].min())} – {int(df_prep['Age'].max())} tahun</b> (rata-rata <b>{df_prep['Age'].mean():.2f} tahun</b>), "
-            f"dan <b>EstimatedSalary</b> berkisar antara <b>${df_prep['EstimatedSalary'].min():,.2f} – ${df_prep['EstimatedSalary'].max():,.2f}</b>."
+            f"Usia nasabah (<b>Age</b>) berkisar antara <b>{int(df_prep['Age'].min())} – {int(df_prep['Age'].max())} tahun</b> "
+            f"(rata-rata <b>{df_prep['Age'].mean():.2f} tahun</b>), skor kredit (<b>CreditScore</b>) berada di rentang "
+            f"<b>{int(df_prep['CreditScore'].min())} – {int(df_prep['CreditScore'].max())}</b> (rata-rata <b>{df_prep['CreditScore'].mean():.2f}</b>), "
+            f"dan perkiraan gaji (<b>EstimatedSalary</b>) berkisar antara <b>${df_prep['EstimatedSalary'].min():,.2f} – ${df_prep['EstimatedSalary'].max():,.2f}</b> "
+            f"(rata-rata <b>${df_prep['EstimatedSalary'].mean():,.2f}</b>)."
         )
     with tab_cat:
         desc_cat = df_prep.describe(include=["object"]).T.reset_index().rename(columns={"index": "Atribut Kategorikal"})
         st.dataframe(desc_cat, use_container_width=True, hide_index=True)
         top_gender = str(desc_cat.loc[0, "top"])
         freq_gender = int(desc_cat.loc[0, "freq"])
+        female_cnt = int((df_prep["Gender"] == "Female").sum())
         render_insight_box(
-            f"Atribut <b>Gender</b> memiliki 2 kategori unik dengan nilai terbanyak (<i>modus</i>) adalah "
-            f"<b>{top_gender}</b> sebanyak <b>{freq_gender:,} nasabah ({freq_gender / len(df_prep) * 100:.2f}%)</b>."
+            f"Variabel <b>Gender</b> terdiri dari 2 nilai unik: <b>{top_gender}</b> sebanyak <b>{freq_gender:,} nasabah ({freq_gender / len(df_prep) * 100:.2f}%)</b> "
+            f"dan <b>Female</b> sebanyak <b>{female_cnt:,} nasabah ({female_cnt / len(df_prep) * 100:.2f}%)</b>."
         )
 
 
 # ===========================================================================
-# HALAMAN 4: EXPLORATORY DATA ANALYSIS (EDA)
+# HALAMAN 3: EXPLORATORY DATA ANALYSIS (EDA)
 # ===========================================================================
-elif selected_page == "4. Exploratory Data Analysis":
+elif selected_page == "3. Exploratory Data Analysis":
     render_page_header(
-        title="4. Exploratory Data Analysis (EDA) & Feature Engineering",
+        title="3. Exploratory Data Analysis (EDA) & Feature Engineering",
         subtitle=(
-            "Analisis mendalam proporsi churn, distribusi variabel kategorikal & kontinu, One-Hot Encoding, "
-            "matriks korelasi sebelum & sesudah rekayasa fitur Credit Score Given Age."
+            "Visualisasi proporsi target Exited, analisis variabel kategorikal (disertai perbandingan jumlah absolut vs "
+            "churn rate %), boxplot variabel kontinu, One-Hot Encoding, dan korelasi sebelum/sesudah Feature Engineering."
         ),
-        badge="Tahap 4 • Eksplorasi & Rekayasa Fitur",
+        badge="Tahap 3 • Eksplorasi Data & Rekayasa Fitur",
     )
 
     # 1. Pie chart proporsi Churn vs Retained
-    render_section_title("1. Proporsi Nasabah Churn (Exited = 1) vs Bertahan (Exited = 0)")
+    render_section_title("1. Proporsi Nasabah Churn (Exited = 1) vs Retained (Exited = 0)")
     col_pie, col_pie_stat = st.columns([1.3, 1])
     with col_pie:
         st.plotly_chart(plot_churn_pie(df_prep), use_container_width=True)
@@ -469,68 +405,75 @@ elif selected_page == "4. Exploratory Data Analysis":
         st.markdown(
             f"""
             <div class="info-card">
-                <h4>📌 Ketidakseimbangan Kelas (Imbalanced Dataset)</h4>
+                <h4>📌 Ketidakseimbangan Kelas Target (Class Imbalance)</h4>
                 <p>
-                    • <b>Nasabah Bertahan (Exited = 0):</b> <b>{kpi_summary['retained_count']:,} nasabah ({kpi_summary['retained_rate']:.2f}%)</b><br>
-                    • <b>Nasabah Churn (Exited = 1):</b> <b>{kpi_summary['churn_count']:,} nasabah ({kpi_summary['churn_rate']:.2f}%)</b>
+                    • <b>Nasabah Bertahan / Retained (Exited = 0):</b> <b>{kpi_summary['retained_count']:,} nasabah ({kpi_summary['retained_rate']:.2f}%)</b><br>
+                    • <b>Nasabah Menutup Rekening / Churn (Exited = 1):</b> <b>{kpi_summary['churn_count']:,} nasabah ({kpi_summary['churn_rate']:.2f}%)</b>
                 </p>
                 <p style="margin-top:0.65rem;">
-                    Proporsi kelas target sangat timpang (sekitar <b>4 : 1</b>). Apabila model dilatih langsung tanpa penanganan
-                    ketidakseimbangan data, model cenderung bias ke kelas mayoritas (<i>Retained</i>) dan menghasilkan
-                    nilai <i>Recall</i> yang rendah pada kelas <i>Churn</i>. Oleh karena itu, teknik <b>SMOTE</b> diterapkan pada tahap pemodelan.
+                    Distribusi target menunjukkan ketimpangan kelas sekitar <b>4 : 1</b> (79,63% vs 20,37%). Ketimpangan ini penting
+                    diperhatikan karena model klasifikasi standar cenderung memprediksi kelas mayoritas (<i>Retained</i>), sehingga
+                    diperlukan teknik penyeimbangan data latih seperti <b>SMOTE</b> pada tahap pemodelan.
                 </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
     render_insight_box(
-        f"Dari total <b>{kpi_summary['total_customers']:,}</b> nasabah, sebesar <b>{kpi_summary['churn_rate']:.2f}% ({kpi_summary['churn_count']:,} nasabah)</b> "
-        f"menutup rekeningnya, sedangkan <b>{kpi_summary['retained_rate']:.2f}% ({kpi_summary['retained_count']:,} nasabah)</b> tetap bertahan."
+        f"Dari <b>{kpi_summary['total_customers']:,}</b> total nasabah, sebanyak <b>{kpi_summary['churn_count']:,} nasabah ({kpi_summary['churn_rate']:.2f}%)</b> "
+        f"mengalami churn, sedangkan <b>{kpi_summary['retained_count']:,} nasabah ({kpi_summary['retained_rate']:.2f}%)</b> tetap bertahan."
     )
 
-    # 2. Categorical variables: HasCrCard & Gender
-    render_section_title("2. Analisis Variabel Kategorikal (HasCrCard & Gender) terhadap Status Churn")
+    # 2. Categorical variables: Gender & HasCrCard per status Exited + Churn Rate (%)
+    render_section_title("2. Analisis Variabel Kategorikal (Gender & HasCrCard) Beserta Churn Rate (%) per Kategori")
     cat_c1, cat_c2 = st.columns(2)
 
-    # Hitung churn rate aktual per kategori HasCrCard
-    cr_group = df_prep.groupby("HasCrCard")["Exited"].agg(["count", "sum", "mean"]).reset_index()
-    cr_group["Churn Rate (%)"] = (cr_group["mean"] * 100).round(2)
-    rate_no_card = float(cr_group.loc[cr_group["HasCrCard"] == 0, "Churn Rate (%)"].values[0])
-    rate_has_card = float(cr_group.loc[cr_group["HasCrCard"] == 1, "Churn Rate (%)"].values[0])
-
-    # Hitung churn rate aktual per kategori Gender
+    # Statistik aktual Gender
     gen_group = df_prep.groupby("Gender")["Exited"].agg(["count", "sum", "mean"]).reset_index()
+    gen_group["Retained"] = gen_group["count"] - gen_group["sum"]
     gen_group["Churn Rate (%)"] = (gen_group["mean"] * 100).round(2)
-    rate_female = float(gen_group.loc[gen_group["Gender"] == "Female", "Churn Rate (%)"].values[0])
-    rate_male = float(gen_group.loc[gen_group["Gender"] == "Male", "Churn Rate (%)"].values[0])
+    f_row = gen_group[gen_group["Gender"] == "Female"].iloc[0]
+    m_row = gen_group[gen_group["Gender"] == "Male"].iloc[0]
+
+    # Statistik aktual HasCrCard
+    cr_group = df_prep.groupby("HasCrCard")["Exited"].agg(["count", "sum", "mean"]).reset_index()
+    cr_group["Retained"] = cr_group["count"] - cr_group["sum"]
+    cr_group["Churn Rate (%)"] = (cr_group["mean"] * 100).round(2)
+    c0_row = cr_group[cr_group["HasCrCard"] == 0].iloc[0]
+    c1_row = cr_group[cr_group["HasCrCard"] == 1].iloc[0]
 
     with cat_c1:
-        st.plotly_chart(plot_categorical_countplot(df_prep, "HasCrCard", "Kepemilikan Kartu Kredit (HasCrCard)"), use_container_width=True)
-        cr_display = cr_group.rename(
-            columns={"HasCrCard": "HasCrCard", "count": "Total Nasabah", "sum": "Jumlah Churn"}
-        )[["HasCrCard", "Total Nasabah", "Jumlah Churn", "Churn Rate (%)"]]
-        cr_display["Kategori"] = cr_display["HasCrCard"].map({0: "Tidak Punya (0)", 1: "Punya Kartu Kredit (1)"})
-        st.dataframe(cr_display[["Kategori", "Total Nasabah", "Jumlah Churn", "Churn Rate (%)"]], use_container_width=True, hide_index=True)
+        st.plotly_chart(plot_categorical_countplot(df_prep, "Gender", "Jenis Kelamin (Gender)"), use_container_width=True)
+        gen_display = gen_group.rename(
+            columns={"count": "Total Nasabah", "Retained": "Jumlah Retained (0)", "sum": "Jumlah Churn (1)"}
+        )[["Gender", "Total Nasabah", "Jumlah Retained (0)", "Jumlah Churn (1)", "Churn Rate (%)"]]
+        st.dataframe(gen_display, use_container_width=True, hide_index=True)
         render_insight_box(
-            f"Nasabah yang memiliki kartu kredit (<b>70.55%</b> dari populasi) memiliki <i>churn rate</i> sebesar "
-            f"<b>{rate_has_card:.2f}%</b>, sedangkan nasabah tanpa kartu kredit memiliki <i>churn rate</i> <b>{rate_no_card:.2f}%</b>. "
-            f"Selisih yang sangat kecil ({abs(rate_has_card - rate_no_card):.2f}%) menunjukkan kepemilikan kartu kredit bukan pembeda kuat terhadap churn."
+            f"Secara jumlah populasi, nasabah laki-laki lebih banyak (<b>{int(m_row['count']):,}</b> vs <b>{int(f_row['count']):,}</b> perempuan). "
+            f"Namun baik secara jumlah absolut maupun proporsi, nasabah <b>Perempuan (Female)</b> mencatat churn lebih tinggi yaitu "
+            f"<b>{int(f_row['sum']):,} nasabah</b> dengan <b>Churn Rate {f_row['Churn Rate (%)']:.2f}%</b>, dibandingkan nasabah "
+            f"<b>Laki-laki (Male)</b> sebanyak <b>{int(m_row['sum']):,} nasabah</b> dengan <b>Churn Rate hanya {m_row['Churn Rate (%)']:.2f}%</b> "
+            f"(selisih risiko <b>{f_row['Churn Rate (%)'] - m_row['Churn Rate (%)']:.2f} poin persentase</b>)."
         )
 
     with cat_c2:
-        st.plotly_chart(plot_categorical_countplot(df_prep, "Gender", "Jenis Kelamin (Gender)"), use_container_width=True)
-        gen_display = gen_group.rename(
-            columns={"Gender": "Gender", "count": "Total Nasabah", "sum": "Jumlah Churn"}
-        )[["Gender", "Total Nasabah", "Jumlah Churn", "Churn Rate (%)"]]
-        st.dataframe(gen_display, use_container_width=True, hide_index=True)
+        st.plotly_chart(plot_categorical_countplot(df_prep, "HasCrCard", "Kepemilikan Kartu Kredit (HasCrCard)"), use_container_width=True)
+        cr_display = cr_group.copy()
+        cr_display["Kategori"] = cr_display["HasCrCard"].map({0: "Tidak Punya Kartu Kredit (0)", 1: "Punya Kartu Kredit (1)"})
+        cr_display = cr_display.rename(
+            columns={"count": "Total Nasabah", "Retained": "Jumlah Retained (0)", "sum": "Jumlah Churn (1)"}
+        )[["Kategori", "Total Nasabah", "Jumlah Retained (0)", "Jumlah Churn (1)", "Churn Rate (%)"]]
+        st.dataframe(cr_display, use_container_width=True, hide_index=True)
         render_insight_box(
-            f"Nasabah perempuan (<b>Female</b>) memiliki tingkat <i>churn</i> sebesar <b>{rate_female:.2f}%</b>, "
-            f"jauh lebih tinggi dibandingkan nasabah laki-laki (<b>Male</b>) yang hanya sebesar <b>{rate_male:.2f}%</b> "
-            f"(selisih <b>{rate_female - rate_male:.2f} poin persentase</b>)."
+            f"<b>Membedakan Jumlah Absolut vs Proporsi:</b> Secara jumlah mentah, nasabah churn yang memiliki kartu kredit terlihat jauh lebih banyak "
+            f"(<b>{int(c1_row['sum']):,} nasabah</b> vs <b>{int(c0_row['sum']):,} nasabah</b> tanpa kartu kredit). Hal ini terjadi semata-mata karena mayoritas "
+            f"populasi nasabah (<b>{int(c1_row['count']):,} orang / 70,55%</b>) memang memiliki kartu kredit. Jika dilihat dari proporsinya, "
+            f"<b>Churn Rate pemilik kartu kredit adalah {c1_row['Churn Rate (%)']:.2f}%</b>, hampir sama dengan yang tidak memiliki kartu kredit yaitu "
+            f"<b>{c0_row['Churn Rate (%)']:.2f}%</b>. Dengan demikian, <code>HasCrCard</code> bukan faktor pembeda churn yang kuat."
         )
 
     # 3. Continuous attributes: Boxplot CreditScore, Age, EstimatedSalary per Exited
-    render_section_title("3. Analisis Variabel Numerik Kontinu (Boxplot per Status Exited)")
+    render_section_title("3. Analisis Variabel Kontinu (Boxplot CreditScore, Age, EstimatedSalary per Status Exited)")
     box_c1, box_c2, box_c3 = st.columns(3)
 
     med_cs_0 = float(df_prep[df_prep["Exited"] == 0]["CreditScore"].median())
@@ -545,37 +488,40 @@ elif selected_page == "4. Exploratory Data Analysis":
 
     med_sal_0 = float(df_prep[df_prep["Exited"] == 0]["EstimatedSalary"].median())
     med_sal_1 = float(df_prep[df_prep["Exited"] == 1]["EstimatedSalary"].median())
+    mean_sal_0 = float(df_prep[df_prep["Exited"] == 0]["EstimatedSalary"].mean())
+    mean_sal_1 = float(df_prep[df_prep["Exited"] == 1]["EstimatedSalary"].mean())
 
     with box_c1:
         st.plotly_chart(plot_continuous_boxplot(df_prep, "CreditScore", "Credit Score"), use_container_width=True)
         render_insight_box(
-            f"Median <b>CreditScore</b> nasabah Churn adalah <b>{med_cs_1:.0f}</b> (rata-rata {mean_cs_1:.1f}), "
-            f"sedikit lebih rendah dibanding nasabah Retained dengan median <b>{med_cs_0:.0f}</b> (rata-rata {mean_cs_0:.1f}). "
-            f"Terdapat sejumlah <i>outlier</i> skor kredit sangat rendah (&lt;400) pada kelompok Churn."
+            f"Distribusi <b>CreditScore</b> kedua kelompok cukup berdekatan: median nasabah Churn adalah <b>{med_cs_1:.0f}</b> "
+            f"(rata-rata <b>{mean_cs_1:.2f}</b>), sedikit lebih rendah dibandingkan nasabah Retained dengan median <b>{med_cs_0:.0f}</b> "
+            f"(rata-rata <b>{mean_cs_0:.2f}</b>), namun terdapat pencilan (<i>outliers</i>) skor kredit di bawah 400 pada kelompok Churn."
         )
     with box_c2:
         st.plotly_chart(plot_continuous_boxplot(df_prep, "Age", "Usia Nasabah (Age)"), use_container_width=True)
         render_insight_box(
-            f"Perbedaan mencolok terlihat pada <b>Age</b>: nasabah Churn memiliki median usia <b>{med_age_1:.0f} tahun</b> "
-            f"(rata-rata <b>{mean_age_1:.1f} tahun</b>), jauh lebih tua dibanding nasabah Retained dengan median "
-            f"<b>{med_age_0:.0f} tahun</b> (rata-rata <b>{mean_age_0:.1f} tahun</b>). Usia adalah pembeda paling signifikan."
+            f"Variabel <b>Age</b> memperlihatkan pemisahan distribusi paling tajam: nasabah yang Churn memiliki median usia "
+            f"<b>{med_age_1:.0f} tahun</b> (rata-rata <b>{mean_age_1:.2f} tahun</b>), jauh lebih tua dibandingkan nasabah Retained "
+            f"yang memiliki median <b>{med_age_0:.0f} tahun</b> (rata-rata <b>{mean_age_0:.2f} tahun</b>)."
         )
     with box_c3:
         st.plotly_chart(plot_continuous_boxplot(df_prep, "EstimatedSalary", "Perkiraan Gaji (EstimatedSalary)"), use_container_width=True)
         render_insight_box(
-            f"Distribusi <b>EstimatedSalary</b> hampir identik antara kedua kelompok: median gaji nasabah Churn sebesar "
-            f"<b>${med_sal_1:,.2f}</b> dan nasabah Retained sebesar <b>${med_sal_0:,.2f}</b>, menandakan gaji saja tidak memicu churn."
+            f"Kotak distribusi kuartil <b>EstimatedSalary</b> hampir sejajar antara kedua kelas: median gaji nasabah Churn sebesar "
+            f"<b>${med_sal_1:,.2f}</b> (rata-rata <b>${mean_sal_1:,.2f}</b>) dan nasabah Retained sebesar <b>${med_sal_0:,.2f}</b> "
+            f"(rata-rata <b>${mean_sal_0:,.2f}</b>), sehingga gaji secara tunggal bukan pemicu utama churn."
         )
 
     # 4. Encoding & Correlation Matrix SEBELUM Feature Engineering
-    render_section_title("4. One-Hot Encoding & Matriks Korelasi SEBELUM Feature Engineering")
+    render_section_title("4. One-Hot Encoding & Heatmap Korelasi SEBELUM Feature Engineering")
     enc_c1, enc_c2 = st.columns([1, 1.35])
     with enc_c1:
         st.markdown("**Hasil `pd.get_dummies(df, drop_first=True)` (Muncul Kolom `Gender_Male`):**")
         st.dataframe(df_encoded.head(8), use_container_width=True)
         st.caption(
-            "Keterangan: Variabel kategorikal `Gender` diubah menjadi biner `Gender_Male` (1 = Laki-laki, 0 = Perempuan) "
-            "agar dapat dihitung matriks korelasinya dan dimasukkan ke algoritma Machine Learning."
+            "Variabel kategorikal `Gender` dikonversi menjadi kolom numerik biner `Gender_Male` (1 = Male, 0 = Female) "
+            "agar dapat dihitung korelasinya dan diproses oleh model Machine Learning."
         )
     with enc_c2:
         corr_before = df_encoded.corr(numeric_only=True)
@@ -587,28 +533,30 @@ elif selected_page == "4. Exploratory Data Analysis":
     corr_age_exited = float(corr_before.loc["Age", "Exited"])
     corr_gender_exited = float(corr_before.loc["Gender_Male", "Exited"])
     corr_cs_exited = float(corr_before.loc["CreditScore", "Exited"])
+    corr_card_exited = float(corr_before.loc["HasCrCard", "Exited"])
+    corr_sal_exited = float(corr_before.loc["EstimatedSalary", "Exited"])
     render_insight_box(
-        f"Sebelum rekayasa fitur, variabel yang memiliki korelasi paling kuat dengan <b>Exited</b> adalah "
-        f"<b>Age</b> (korelasi positif <b>r = {corr_age_exited:.4f}</b>, semakin tua usia semakin rentan churn) dan "
-        f"<b>Gender_Male</b> (korelasi negatif <b>r = {corr_gender_exited:.4f}</b>, laki-laki lebih jarang churn dibanding perempuan). "
-        f"Sementara itu, <b>CreditScore</b> memiliki korelasi langsung yang lemah terhadap Exited (<b>r = {corr_cs_exited:.4f}</b>)."
+        f"Sebelum rekayasa fitur, atribut dengan korelasi tertinggi terhadap <b>Exited</b> adalah <b>Age</b> sebesar "
+        f"<b>r = {corr_age_exited:.4f}</b> (korelasi positif: semakin bertambah usia, risiko churn meningkat) dan "
+        f"<b>Gender_Male</b> sebesar <b>r = {corr_gender_exited:.4f}</b> (korelasi negatif: nasabah laki-laki lebih jarang churn dibanding perempuan). "
+        f"Sebaliknya, <b>CreditScore</b> (<b>r = {corr_cs_exited:.4f}</b>), <b>EstimatedSalary</b> (<b>r = {corr_sal_exited:.4f}</b>), "
+        f"dan <b>HasCrCard</b> (<b>r = {corr_card_exited:.4f}</b>) memiliki korelasi linier langsung yang sangat mendekati nol."
     )
 
-    # 5. Feature Engineering & Correlation Matrix SETELAH Feature Engineering
-    render_section_title("5. Feature Engineering (`Credit Score Given Age`) & Matriks Korelasi SETELAH Feature Engineering")
+    # 5. Feature Engineering & Correlation Matrix SESUDAH Feature Engineering
+    render_section_title("5. Feature Engineering (`Credit Score Given Age`) & Heatmap Korelasi SESUDAH Feature Engineering")
     fe_c1, fe_c2 = st.columns([1, 1.35])
     with fe_c1:
-        st.markdown("**Rumus Fitur Baru:** `Credit Score Given Age = CreditScore / Age`")
+        st.markdown("**Penambahan Fitur Baru:** `Credit Score Given Age = CreditScore / Age`")
         st.dataframe(df_fe.head(8), use_container_width=True)
         mean_csga_0 = float(df_fe[df_fe["Exited"] == 0]["Credit Score Given Age"].mean())
         mean_csga_1 = float(df_fe[df_fe["Exited"] == 1]["Credit Score Given Age"].mean())
         st.markdown(
             f"""
             <div class="info-card" style="margin-top:0.5rem;">
-                <h4>🔬 Rasionalitas Fitur <code>Credit Score Given Age</code></h4>
+                <h4>🔬 Makna Bisnis Fitur <code>Credit Score Given Age</code></h4>
                 <p>
-                    Rasio skor kredit terhadap usia mengukur seberapa tinggi kelayakan kredit yang berhasil dicapai nasabah
-                    relatif terhadap usianya.<br>
+                    Fitur ini mengukur rasio skor kredit relatif terhadap usia nasabah.<br>
                     • Rata-rata pada kelompok <b>Retained (0)</b>: <b>{mean_csga_0:.2f}</b><br>
                     • Rata-rata pada kelompok <b>Churn (1)</b>: <b>{mean_csga_1:.2f}</b>
                 </p>
@@ -619,37 +567,44 @@ elif selected_page == "4. Exploratory Data Analysis":
     with fe_c2:
         corr_after = df_fe.corr(numeric_only=True)
         st.plotly_chart(
-            plot_correlation_heatmap(corr_after, "Correlation Matrix SETELAH Feature Engineering"),
+            plot_correlation_heatmap(corr_after, "Correlation Matrix SESUDAH Feature Engineering"),
             use_container_width=True,
         )
 
     corr_csga_exited = float(corr_after.loc["Credit Score Given Age", "Exited"])
     corr_csga_age = float(corr_after.loc["Credit Score Given Age", "Age"])
     render_insight_box(
-        f"Setelah penambahan fitur <b>Credit Score Given Age</b>, fitur baru ini menunjukkan korelasi negatif yang kuat "
-        f"terhadap <b>Exited</b> sebesar <b>r = {corr_csga_exited:.4f}</b> (jauh lebih kuat dibandingkan korelasi <i>CreditScore</i> murni "
-        f"yang hanya <b>r = {corr_cs_exited:.4f}</b>), serta berkorelasi negatif dengan <b>Age</b> sebesar <b>r = {corr_csga_age:.4f}</b>. "
-        f"Artinya, nasabah berusia lanjut dengan skor kredit stagnan/rendah (rasio <i>Credit Score Given Age</i> rendah) memiliki risiko churn yang tinggi."
+        f"Sesudah feature engineering, fitur baru <b>Credit Score Given Age</b> menghasilkan korelasi negatif yang signifikan terhadap "
+        f"<b>Exited</b> sebesar <b>r = {corr_csga_exited:.4f}</b> (meningkat pesat dibanding <i>CreditScore</i> murni yang hanya "
+        f"<b>r = {corr_cs_exited:.4f}</b>) serta berkorelasi negatif kuat dengan <b>Age</b> (<b>r = {corr_csga_age:.4f}</b>). "
+        f"Ini menunjukkan bahwa semakin rendah rasio skor kredit terhadap usia nasabah, semakin tinggi kecenderungan nasabah untuk churn."
     )
 
 
 # ===========================================================================
-# HALAMAN 5: MODELLING & EVALUATION
+# HALAMAN 4: MODELLING & EVALUASI
 # ===========================================================================
-elif selected_page == "5. Modelling & Evaluation":
+elif selected_page == "4. Modelling & Evaluasi":
     render_page_header(
-        title="5. Modelling & Evaluation",
+        title="4. Modelling & Evaluasi",
         subtitle=(
-            "Pembagian data Train/Test (75:25, Stratified), pelatihan 4 algoritma klasifikasi pada Skenario A (Sebelum SMOTE) "
-            "dan Skenario B (Sesudah SMOTE pada data train), evaluasi kurva ROC, serta analisis Feature Importance."
+            "Pelatihan 4 algoritma klasifikasi dengan train_test_split (75:25, stratify=y), perbandingan skenario "
+            "SEBELUM vs SESUDAH SMOTE pada data test, kurva ROC gabungan, serta eksperimen rasio SMOTE 1:1 vs 60:40."
         ),
-        badge="Tahap 5 • Pemodelan & Evaluasi",
+        badge="Tahap 4 • Pemodelan & Evaluasi Model",
     )
 
     split_info = metrics_payload["split_info"]
+    best_info = metrics_payload["best_overall"]
 
-    # 1. Informasi Split Data & Distribusi Kelas SMOTE
-    render_section_title("1. Pembagian Data (Train-Test Split) & Penanganan Imbalance dengan SMOTE")
+    # cari model dengan Recall & F1 churn tertinggi pada skenario SMOTE 1:1
+    best_recall_model = max(
+        metrics_payload["after_smote_1_1"].items(),
+        key=lambda item: item[1]["recall_churn"],
+    )
+
+    # 1. Ringkasan Split Data
+    render_section_title("1. Pembagian Data (Train-Test Split) & Pencegahan Data Leakage pada SMOTE")
     s1, s2, s3, s4 = st.columns(4)
     with s1:
         render_kpi_card(
@@ -666,43 +621,67 @@ elif selected_page == "5. Modelling & Evaluation":
             "teal",
         )
     with s3:
-        total_sm1 = split_info["train_class_dist_smote_1_1"]["0"] + split_info["train_class_dist_smote_1_1"]["1"]
         render_kpi_card(
-            "Train Sesudah SMOTE (1:1)",
-            f"{total_sm1:,} Baris",
-            f"Retained: {split_info['train_class_dist_smote_1_1']['0']:,} | Churn: {split_info['train_class_dist_smote_1_1']['1']:,}",
+            "Terbaik (ROC AUC Tertinggi)",
+            best_info["model_name"],
+            f"{best_info['scenario']} (AUC: {best_info['roc_auc']:.4f})",
             "gold",
         )
     with s4:
-        best_info = metrics_payload["best_overall"]
         render_kpi_card(
-            "Model Terbaik (ROC AUC)",
-            best_info["model_name"],
-            f"{best_info['scenario']} (AUC: {best_info['roc_auc']:.4f})",
+            "Terbaik (Recall & F1 Churn)",
+            best_recall_model[0],
+            f"Sesudah SMOTE (Recall: {best_recall_model[1]['recall_churn']*100:.2f}% | F1: {best_recall_model[1]['f1_churn']:.4f})",
             "danger",
         )
 
     st.markdown(
         f"""
         <div class="info-card">
-            <h4>🛡️ Pencegahan Data Leakage pada Penerapan SMOTE</h4>
+            <h4>🛡️ Konfigurasi Split & Aturan Bebas Data Leakage</h4>
             <p>
-                Pembagian data dilakukan menggunakan <code>train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)</code>
-                pada <b>{split_info['num_features']} fitur prediktor</b> (<code>{', '.join(split_info['feature_columns'])}</code>).
-                Sesuai kaidah ilmiah <i>Machine Learning</i>, teknik <b>SMOTE (Synthetic Minority Over-sampling Technique)</b>
-                <b>hanya diterapkan pada data latih (<code>X_train, y_train</code>) setelah proses split</b>, sedangkan data uji
-                (<code>X_test, y_test</code> sebanyak {split_info['test_rows']:,} baris) dibiarkan murni agar evaluasi mencerminkan
-                distribusi dunia nyata secara objektif.
+                • Variabel prediktor <b>X</b> mencakup <b>{split_info['num_features']} fitur</b>:
+                <code>{', '.join(split_info['feature_columns'])}</code>, sedangkan target <b>y</b> adalah <code>Exited</code>.<br>
+                • Pembagian dilakukan dengan <code>train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)</code>.<br>
+                • <b>SMOTE hanya diterapkan pada data train (<code>X_train, y_train</code>) setelah proses split</b>. Data uji
+                (<code>X_test, y_test</code> = {split_info['test_rows']:,} baris) sama sekali tidak disentuh oleh SMOTE, dan seluruh metrik
+                (<i>Classification Report, Confusion Matrix,</i> serta <i>ROC AUC</i> melalui <code>predict_proba(X_test)</code>)
+                dihitung murni pada <b>DATA TEST</b>.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # 2. Detail Classification Report & Confusion Matrix per Model & Skenario
-    render_section_title("2. Evaluasi Detail Tiap Model (Classification Report, Confusion Matrix & ROC AUC pada Data Test)")
-    tab_scen_a, tab_scen_b = st.tabs(
-        ["🅰️ Skenario A: SEBELUM SMOTE (Data Train Asli)", "🅱️ Skenario B: SESUDAH SMOTE 1:1 (Pada Data Train)"]
+    # 2. Selectbox Rasio SMOTE (1:1 vs sekitar 60:40)
+    render_section_title("2. Pilihan Rasio SMOTE & Evaluasi Detail Tiap Model pada Data Test")
+    smote_ratio_choice = st.selectbox(
+        "Pilih Skenario Rasio SMOTE untuk Dibandingkan dengan Kondisi Sebelum SMOTE:",
+        options=[
+            "SMOTE Rasio 1:1 (Seimbang 50:50 — sampling_strategy = 1.0)",
+            "SMOTE Rasio ~60:40 (Mayoritas Tetap Dominan — sampling_strategy = 0.6667)",
+            "Tampilkan Ketiga Skenario Sekaligus (Sebelum SMOTE vs SMOTE 1:1 vs SMOTE 60:40)",
+        ],
+        index=0,
+    )
+
+    active_smote_key = (
+        "after_smote_60_40"
+        if "60:40" in smote_ratio_choice and "Ketiga" not in smote_ratio_choice
+        else "after_smote_1_1"
+    )
+    active_smote_label = (
+        "Sesudah SMOTE (60:40)"
+        if active_smote_key == "after_smote_60_40"
+        else "Sesudah SMOTE (1:1)"
+    )
+
+    tab_scen_a, tab_scen_b, tab_scen_c = st.tabs(
+        [
+            "🅰️ Skenario A: SEBELUM SMOTE",
+            "🅱️ Skenario B: SESUDAH SMOTE (Rasio 1:1 / 50:50)",
+            "🆎 Skenario Eksperimen: SESUDAH SMOTE (Rasio 60:40)",
+        ]
     )
 
     def _render_scenario_details(scen_dict: dict, scen_label: str) -> None:
@@ -737,40 +716,78 @@ elif selected_page == "5. Modelling & Evaluation":
     with tab_scen_a:
         _render_scenario_details(metrics_payload["before_smote"], "Sebelum SMOTE")
     with tab_scen_b:
+        dist_11 = split_info["train_class_dist_smote_1_1"]
+        st.caption(
+            f"Distribusi Data Train setelah SMOTE 1:1: Kelas 0 (Retained) = **{dist_11['0']:,}** baris (50,0%), "
+            f"Kelas 1 (Churn) = **{dist_11['1']:,}** baris (50,0%)."
+        )
         _render_scenario_details(metrics_payload["after_smote_1_1"], "Sesudah SMOTE 1:1")
-
-    # 3. Kurva ROC Gabungan Keempat Model (Sebelum vs Sesudah SMOTE)
-    render_section_title("3. Kurva ROC Gabungan Keempat Model (Sebelum SMOTE vs Sesudah SMOTE)")
-    roc_c1, roc_c2 = st.columns(2)
-    with roc_c1:
-        st.plotly_chart(
-            plot_combined_roc_curve(metrics_payload["before_smote"], "Sebelum SMOTE"),
-            use_container_width=True,
+    with tab_scen_c:
+        dist_60 = split_info["train_class_dist_smote_60_40"]
+        tot_60 = dist_60["0"] + dist_60["1"]
+        st.caption(
+            f"Distribusi Data Train setelah SMOTE 60:40: Kelas 0 (Retained) = **{dist_60['0']:,}** baris "
+            f"({dist_60['0']/tot_60*100:.1f}%), Kelas 1 (Churn) = **{dist_60['1']:,}** baris ({dist_60['1']/tot_60*100:.1f}%)."
         )
-    with roc_c2:
-        st.plotly_chart(
-            plot_combined_roc_curve(metrics_payload["after_smote_1_1"], "Sesudah SMOTE (1:1)"),
-            use_container_width=True,
-        )
+        _render_scenario_details(metrics_payload["after_smote_60_40"], "Sesudah SMOTE 60:40")
 
-    gb_auc_before = metrics_payload["before_smote"]["Gradient Boosting"]["roc_auc"]
-    gb_auc_after = metrics_payload["after_smote_1_1"]["Gradient Boosting"]["roc_auc"]
-    rf_auc_before = metrics_payload["before_smote"]["Random Forest"]["roc_auc"]
-    rf_auc_after = metrics_payload["after_smote_1_1"]["Random Forest"]["roc_auc"]
+    # 3. Kurva ROC Gabungan Keempat Model
+    render_section_title("3. Kurva ROC Gabungan Keempat Model (Pada Data Test)")
+    if "Ketiga" in smote_ratio_choice:
+        rc1, rc2, rc3 = st.columns(3)
+        with rc1:
+            st.plotly_chart(plot_combined_roc_curve(metrics_payload["before_smote"], "Sebelum SMOTE"), use_container_width=True)
+        with rc2:
+            st.plotly_chart(plot_combined_roc_curve(metrics_payload["after_smote_1_1"], "Sesudah SMOTE (1:1)"), use_container_width=True)
+        with rc3:
+            st.plotly_chart(plot_combined_roc_curve(metrics_payload["after_smote_60_40"], "Sesudah SMOTE (60:40)"), use_container_width=True)
+    else:
+        roc_c1, roc_c2 = st.columns(2)
+        with roc_c1:
+            st.plotly_chart(
+                plot_combined_roc_curve(metrics_payload["before_smote"], "Sebelum SMOTE"),
+                use_container_width=True,
+            )
+        with roc_c2:
+            st.plotly_chart(
+                plot_combined_roc_curve(metrics_payload[active_smote_key], active_smote_label),
+                use_container_width=True,
+            )
+
+    gb_auc_b = metrics_payload["before_smote"]["Gradient Boosting"]["roc_auc"]
+    gb_auc_11 = metrics_payload["after_smote_1_1"]["Gradient Boosting"]["roc_auc"]
+    gb_auc_60 = metrics_payload["after_smote_60_40"]["Gradient Boosting"]["roc_auc"]
+    rf_auc_b = metrics_payload["before_smote"]["Random Forest"]["roc_auc"]
+    rf_auc_11 = metrics_payload["after_smote_1_1"]["Random Forest"]["roc_auc"]
+    rf_auc_60 = metrics_payload["after_smote_60_40"]["Random Forest"]["roc_auc"]
     render_insight_box(
-        f"Berdasarkan kurva ROC pada data uji (<code>X_test</code>), <b>Gradient Boosting</b> menempati posisi teratas baik "
-        f"sebelum SMOTE (<b>AUC = {gb_auc_before:.4f}</b>) maupun sesudah SMOTE (<b>AUC = {gb_auc_after:.4f}</b>), disusul oleh "
-        f"<b>Random Forest</b> (<b>AUC = {rf_auc_before:.4f}</b> sebelum SMOTE dan <b>{rf_auc_after:.4f}</b> sesudah SMOTE). "
-        f"Keempat model berada di atas garis tebakan acak (AUC = 0.50)."
+        f"Pada seluruh skenario pengujian terhadap <code>X_test</code>, <b>Gradient Boosting</b> konsisten memperoleh "
+        f"nilai ROC AUC tertinggi (<b>{gb_auc_b:.4f}</b> sebelum SMOTE, <b>{gb_auc_11:.4f}</b> pada SMOTE 1:1, dan "
+        f"<b>{gb_auc_60:.4f}</b> pada SMOTE 60:40), diikuti oleh <b>Random Forest</b> (<b>{rf_auc_b:.4f}</b> sebelum SMOTE, "
+        f"<b>{rf_auc_11:.4f}</b> pada SMOTE 1:1, dan <b>{rf_auc_60:.4f}</b> pada SMOTE 60:40)."
     )
 
-    # 4. Tabel Perbandingan Ringkas & Analisis Trade-off Recall vs Accuracy
-    render_section_title("4. Tabel Perbandingan Ringkas Semua Model & Analisis Trade-off Recall vs Accuracy")
-    comp_df = build_comparison_dataframe(metrics_payload, include_60_40=False)
+    # 4. Tabel Perbandingan Ringkas & Penandaan Model Terbaik + Trade-off
+    render_section_title("4. Tabel Perbandingan Model & Analisis Trade-off Recall vs Accuracy")
+    comp_df = build_comparison_dataframe(metrics_payload, include_60_40=True)
+    if "Ketiga" not in smote_ratio_choice:
+        comp_df = comp_df[comp_df["Skenario"].isin(["Sebelum SMOTE", active_smote_label])].reset_index(drop=True)
+
     max_auc_val = comp_df["ROC AUC"].max()
-    comp_df["Status Model"] = comp_df["ROC AUC"].apply(
-        lambda v: "⭐ Terbaik (ROC AUC Tertinggi)" if v == max_auc_val else "Kandidat"
-    )
+    max_rec_val = comp_df["Recall (Churn)"].max()
+    max_f1_val = comp_df["F1-Score (Churn)"].max()
+
+    def _badge_model(row: pd.Series) -> str:
+        badges = []
+        if row["ROC AUC"] == max_auc_val:
+            badges.append("🏆 ROC AUC Terbaik")
+        if row["Recall (Churn)"] == max_rec_val:
+            badges.append("🎯 Recall Churn Tertinggi")
+        if row["F1-Score (Churn)"] == max_f1_val:
+            badges.append("⭐ F1 Churn Tertinggi")
+        return " | ".join(badges) if badges else "Kandidat"
+
+    comp_df["Penandaan Model Terbaik"] = comp_df.apply(_badge_model, axis=1)
 
     st.dataframe(
         comp_df.style.highlight_max(
@@ -781,47 +798,66 @@ elif selected_page == "5. Modelling & Evaluation":
         hide_index=True,
     )
 
-    gb_rec_before = metrics_payload["before_smote"]["Gradient Boosting"]["recall_churn"]
-    gb_rec_after = metrics_payload["after_smote_1_1"]["Gradient Boosting"]["recall_churn"]
-    gb_acc_before = metrics_payload["before_smote"]["Gradient Boosting"]["accuracy"]
-    gb_acc_after = metrics_payload["after_smote_1_1"]["accuracy"] if "accuracy" in metrics_payload["after_smote_1_1"] else metrics_payload["after_smote_1_1"]["Gradient Boosting"]["accuracy"]
-    rf_rec_before = metrics_payload["before_smote"]["Random Forest"]["recall_churn"]
-    rf_rec_after = metrics_payload["after_smote_1_1"]["Random Forest"]["recall_churn"]
+    gb_b = metrics_payload["before_smote"]["Gradient Boosting"]
+    gb_11 = metrics_payload["after_smote_1_1"]["Gradient Boosting"]
+    gb_60 = metrics_payload["after_smote_60_40"]["Gradient Boosting"]
+    rf_b = metrics_payload["before_smote"]["Random Forest"]
+    rf_11 = metrics_payload["after_smote_1_1"]["Random Forest"]
+    rf_60 = metrics_payload["after_smote_60_40"]["Random Forest"]
 
     st.markdown(
         f"""
         <div class="info-card" style="border-left: 5px solid {COLORS['navy']}; margin-top: 0.8rem;">
-            <h4>⚖️ Analisis Trade-Off: Recall (Churn) vs Accuracy Sebelum & Sesudah SMOTE</h4>
+            <h4>⚖️ Penjelasan Trade-Off: Mengapa SMOTE Menaikkan Recall Churn tetapi Menurunkan Accuracy?</h4>
             <p>
-                1. <b>Sebelum SMOTE (Data Tidak Seimbang):</b> Model mencapai <i>Accuracy</i> tinggi (misalnya <b>Gradient Boosting {gb_acc_before*100:.2f}%</b>),
-                tetapi sangat konservatif dalam menebak kelas <i>Churn</i> sehingga <b>Recall (Churn) rendah ({gb_rec_before*100:.2f}% pada Gradient Boosting dan {rf_rec_before*100:.2f}% pada Random Forest)</b>.
-                Artinya, lebih dari 70% nasabah yang sebenarnya akan menutup rekening gagal terdeteksi (<i>False Negative</i> tinggi).<br><br>
-                2. <b>Sesudah SMOTE (1:1 pada Data Train):</b> Kemampuan mendeteksi nasabah <i>churn</i> melonjak drastis!
-                <b>Recall (Churn) pada Gradient Boosting meningkat dari {gb_rec_before*100:.2f}% menjadi {gb_rec_after*100:.2f}%</b>, dan pada
-                <b>Random Forest meningkat dari {rf_rec_before*100:.2f}% menjadi {rf_rec_after*100:.2f}%</b>. Konsekuensi alami dari peningkatan sensitivitas ini adalah
-                sedikit penurunan pada <i>Accuracy</i> keseluruhan (menjadi {gb_acc_after*100:.2f}% pada Gradient Boosting) karena munculnya sebagian <i>False Positive</i>.<br><br>
-                3. <b>Perspektif Bisnis Bank:</b> Dalam kasus retensi nasabah, <b>biaya kehilangan nasabah (False Negative) jauh lebih mahal</b>
-                dibandingkan biaya mengirimkan promosi retensi kepada nasabah yang ternyata bertahan (False Positive). Oleh sebab itu,
-                model dengan <b>ROC AUC tinggi sekaligus Recall yang seimbang pasca-SMOTE</b> jauh lebih bernilai secara operasional.
+                1. <b>Kondisi Sebelum SMOTE (Akurasi Tinggi namun Recall Rendah):</b> Karena 79,63% data adalah nasabah bertahan (<i>Retained</i>),
+                model yang jarang menebak <i>Churn</i> secara otomatis terlihat memiliki <b>Accuracy tinggi</b> (misalnya <b>Gradient Boosting {gb_b['accuracy']*100:.2f}%</b>
+                dan <b>Random Forest {rf_b['accuracy']*100:.2f}%</b>). Namun, <b>Recall kelas Churn sangat rendah ({gb_b['recall_churn']*100:.2f}% pada Gradient Boosting
+                dan {rf_b['recall_churn']*100:.2f}% pada Random Forest)</b> — artinya mayoritas nasabah yang benar-benar akan menutup rekening lolos tanpa terdeteksi.<br><br>
+                2. <b>Kondisi Sesudah SMOTE 1:1 (Recall &amp; F1 Melonjak, Accuracy Turun):</b> Setelah kelas minoritas diseimbangkan pada data train,
+                model menjadi jauh lebih sensitif mengenali pola nasabah churn. Pada <b>Gradient Boosting</b>, <b>Recall Churn melonjak lebih dari 2x lipat menjadi
+                {gb_11['recall_churn']*100:.2f}%</b> (F1-Score naik dari {gb_b['f1_churn']:.4f} ke <b>{gb_11['f1_churn']:.4f}</b>), dan pada <b>Random Forest</b>
+                Recall naik menjadi <b>{rf_11['recall_churn']*100:.2f}%</b>. Konsekuensinya, sebagian nasabah bertahan ikut terprediksi berisiko churn
+                (<i>False Positive</i> bertambah), sehingga <b>Accuracy turun menjadi {gb_11['accuracy']*100:.2f}%</b> (Gradient Boosting) dan
+                <b>{rf_11['accuracy']*100:.2f}%</b> (Random Forest).<br><br>
+                3. <b>Keunggulan Rasio SMOTE 60:40:</b> Dengan menjaga kelas mayoritas tetap dominan (60% : 40%), model mencapai titik kompromi optimal:
+                pada <b>Gradient Boosting</b>, <b>F1-Score mencapai titik tertinggi ({gb_60['f1_churn']:.4f})</b> dengan <b>Accuracy kembali naik ke {gb_60['accuracy']*100:.2f}%</b>,
+                <b>ROC AUC {gb_60['roc_auc']:.4f}</b>, dan <b>Recall Churn tetap kuat di {gb_60['recall_churn']*100:.2f}%</b>.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # 5. Feature Importance dari Random Forest
-    render_section_title("5. Tingkat Kepentingan Fitur (Feature Importance — Random Forest)")
-    fi_scen_choice = st.radio(
-        "Pilih skenario model Random Forest untuk melihat Feature Importance:",
-        options=["Sebelum SMOTE", "Sesudah SMOTE (1:1)"],
-        horizontal=True,
-    )
-    fi_data = (
-        metrics_payload["before_smote"]["Random Forest"]["feature_importances"]
-        if fi_scen_choice == "Sebelum SMOTE"
-        else metrics_payload["after_smote_1_1"]["Random Forest"]["feature_importances"]
+
+# ===========================================================================
+# HALAMAN 5: FEATURE IMPORTANCE
+# ===========================================================================
+elif selected_page == "5. Feature Importance":
+    render_page_header(
+        title="5. Analisis Feature Importance (Random Forest)",
+        subtitle=(
+            "Mengukur tingkat kontribusi setiap fitur dalam memisahkan kelas Churn vs Retained pada algoritma "
+            "Random Forest serta narasi faktor paling berpengaruh berdasarkan hasil aktual."
+        ),
+        badge="Tahap 5 • Tingkat Kepentingan Fitur",
     )
 
+    fi_scen_choice = st.radio(
+        "Pilih Skenario Pelatihan Random Forest:",
+        options=["Sebelum SMOTE", "Sesudah SMOTE (1:1)", "Sesudah SMOTE (60:40)"],
+        horizontal=True,
+    )
+
+    scen_map_fi = {
+        "Sebelum SMOTE": metrics_payload["before_smote"]["Random Forest"]["feature_importances"],
+        "Sesudah SMOTE (1:1)": metrics_payload["after_smote_1_1"]["Random Forest"]["feature_importances"],
+        "Sesudah SMOTE (60:40)": metrics_payload["after_smote_60_40"]["Random Forest"]["feature_importances"],
+    }
+    fi_data = scen_map_fi[fi_scen_choice]
+    sorted_fi = sorted(fi_data.items(), key=lambda x: x[1], reverse=True)
+
+    render_section_title(f"1. Grafik Horizontal Feature Importance — Random Forest ({fi_scen_choice})")
     fi_col1, fi_col2 = st.columns([1.35, 1])
     with fi_col1:
         st.plotly_chart(
@@ -829,295 +865,113 @@ elif selected_page == "5. Modelling & Evaluation":
             use_container_width=True,
         )
     with fi_col2:
-        sorted_fi = sorted(fi_data.items(), key=lambda x: x[1], reverse=True)
         fi_table = pd.DataFrame(
             [
                 {
                     "Peringkat": i + 1,
                     "Nama Fitur": k,
-                    "Bobot Importance": round(v, 4),
-                    "Kontribusi (%)": f"{v*100:.2f}%",
+                    "Bobot Kepentingan": round(v, 4),
+                    "Persentase Kontribusi (%)": f"{v*100:.2f}%",
                 }
                 for i, (k, v) in enumerate(sorted_fi)
             ]
         )
-        st.markdown("**Tabel Peringkat Kontribusi Fitur:**")
+        st.markdown("**Tabel Peringkat Kontribusi Fitur Aktual:**")
         st.dataframe(fi_table, use_container_width=True, hide_index=True)
+
+    # Bandingkan ketiga skenario berdampingan
+    render_section_title("2. Perbandingan Feature Importance di Ketiga Skenario")
+    fi_comp_rows = []
+    for feat in metrics_payload["split_info"]["feature_columns"]:
+        fi_comp_rows.append(
+            {
+                "Nama Fitur": feat,
+                "Sebelum SMOTE (%)": round(metrics_payload["before_smote"]["Random Forest"]["feature_importances"][feat] * 100, 2),
+                "Sesudah SMOTE 1:1 (%)": round(metrics_payload["after_smote_1_1"]["Random Forest"]["feature_importances"][feat] * 100, 2),
+                "Sesudah SMOTE 60:40 (%)": round(metrics_payload["after_smote_60_40"]["Random Forest"]["feature_importances"][feat] * 100, 2),
+            }
+        )
+    df_fi_comp = pd.DataFrame(fi_comp_rows).sort_values("Sesudah SMOTE 1:1 (%)", ascending=False)
+    st.dataframe(df_fi_comp, use_container_width=True, hide_index=True)
 
     top1_name, top1_val = sorted_fi[0]
     top2_name, top2_val = sorted_fi[1]
     top3_name, top3_val = sorted_fi[2]
-    render_insight_box(
-        f"Pada model Random Forest ({fi_scen_choice}), tiga fitur yang paling berpengaruh dalam menentukan keputusan nasabah "
-        f"churn adalah <b>1) {top1_name} ({top1_val*100:.2f}%)</b>, <b>2) {top2_name} ({top2_val*100:.2f}%)</b>, dan "
-        f"<b>3) {top3_name} ({top3_val*100:.2f}%)</b>. Sementara itu, atribut biner <b>Gender_Male</b> dan <b>HasCrCard</b> "
-        f"memiliki kontribusi paling kecil (masing-masing di bawah 2%). Ini membuktikan bahwa fitur hasil rekayasa "
-        f"<code>Credit Score Given Age</code> bersama variabel kontinu mampu mendominasi daya pisah pohon keputusan."
-    )
+    top4_name, top4_val = sorted_fi[3]
 
-
-# ===========================================================================
-# HALAMAN 6: KESIMPULAN, REKOMENDASI, DAN SARAN
-# ===========================================================================
-elif selected_page == "6. Kesimpulan & Saran":
-    render_page_header(
-        title="6. Kesimpulan, Rekomendasi & Eksperimen Saran SMOTE",
-        subtitle=(
-            "Menjawab ketiga objective bisnis berdasarkan angka aktual hasil analisis, rekomendasi strategi retensi bank, "
-            "serta simulasi interaktif saran panduan: perbandingan rasio SMOTE 1:1 (50:50) vs 60:40."
-        ),
-        badge="Tahap 6 • Kesimpulan & Strategi",
-    )
-
-    # Ambil angka aktual untuk narasi kesimpulan
-    corr_after = df_fe.corr(numeric_only=True)
-    corr_age = float(corr_after.loc["Age", "Exited"])
-    corr_csga = float(corr_after.loc["Credit Score Given Age", "Exited"])
-    corr_gender = float(corr_after.loc["Gender_Male", "Exited"])
-
-    fi_before = sorted(
-        metrics_payload["before_smote"]["Random Forest"]["feature_importances"].items(),
-        key=lambda x: x[1],
-        reverse=True,
-    )
-    fi_after = sorted(
-        metrics_payload["after_smote_1_1"]["Random Forest"]["feature_importances"].items(),
-        key=lambda x: x[1],
-        reverse=True,
-    )
-    best_overall = metrics_payload["best_overall"]
-
-    # Segmen risiko berdasarkan kelompok umur aktual
-    df_age_seg = df_raw.copy()
-    df_age_seg["Kelompok Usia"] = pd.cut(
-        df_age_seg["Age"],
-        bins=[0, 30, 40, 50, 60, 100],
-        labels=["≤ 30 Tahun", "31 – 40 Tahun", "41 – 50 Tahun", "51 – 60 Tahun", "> 60 Tahun"],
-    )
-    seg_summary = (
-        df_age_seg.groupby("Kelompok Usia", observed=False)["Exited"]
-        .agg(Total_Nasabah="count", Jumlah_Churn="sum", Churn_Rate="mean")
-        .reset_index()
-    )
-    seg_summary["Churn Rate (%)"] = (seg_summary["Churn_Rate"] * 100).round(2)
-    highest_risk_seg = seg_summary.sort_values("Churn Rate (%)", ascending=False).iloc[0]
-
-    render_section_title("1. Kesimpulan Utama (Menjawab Tiga Objective Bisnis)")
-    c_obj1, c_obj2, c_obj3 = st.columns(3)
-
-    with_fi_1 = f"{fi_before[0][0]} ({fi_before[0][1]*100:.2f}%)"
-    with_fi_2 = f"{fi_before[1][0]} ({fi_before[1][1]*100:.2f}%)"
-    with_fi_3 = f"{fi_before[2][0]} ({fi_before[2][1]*100:.2f}%)"
-
-    with c_obj1:
-        st.markdown(
-            f"""
-            <div class="info-card" style="border-top: 4px solid {COLORS['navy']}; height: 100%;">
-                <h4>🔍 Jawaban Objective (a): Faktor Paling Memengaruhi Churn</h4>
-                <p>
-                    1. <b>Dari Analisis Korelasi & Demografi:</b> Faktor terkuat yang memicu <i>churn</i> adalah <b>Usia (Age)</b>
-                    dengan korelasi positif <b>r = {corr_age:.4f}</b> dan fitur rekayasa <b>Credit Score Given Age</b> dengan korelasi
-                    negatif <b>r = {corr_csga:.4f}</b>. Segmen usia <b>{highest_risk_seg['Kelompok Usia']}</b> mencatat tingkat
-                    <i>churn</i> tertinggi yaitu <b>{highest_risk_seg['Churn Rate (%)']:.2f}%</b>. Selain itu, nasabah perempuan memiliki
-                    proporsi <i>churn</i> lebih tinggi (<b>25.07%</b>) dibanding laki-laki (<b>16.46%</b>).<br><br>
-                    2. <b>Dari Feature Importance Random Forest:</b> Tiga fitur kontributor terbesar pada pemisahan pohon keputusan adalah
-                    <b>{with_fi_1}</b>, <b>{with_fi_2}</b>, dan <b>{with_fi_3}</b> (atau <b>Age {fi_after[0][1]*100:.2f}%</b> pasca-SMOTE).
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with c_obj2:
-        gb_b = metrics_payload["before_smote"]["Gradient Boosting"]
-        gb_a = metrics_payload["after_smote_1_1"]["Gradient Boosting"]
-        rf_b = metrics_payload["before_smote"]["Random Forest"]
-        rf_a = metrics_payload["after_smote_1_1"]["Random Forest"]
-        st.markdown(
-            f"""
-            <div class="info-card" style="border-top: 4px solid {COLORS['teal']}; height: 100%;">
-                <h4>🏆 Jawaban Objective (b): Model Prediksi Paling Akurat</h4>
-                <p>
-                    1. <b>Berdasarkan ROC AUC & Accuracy:</b> Algoritma <b>{best_overall['model_name']} ({best_overall['scenario']})</b>
-                    merupakan model terbaik secara keseluruhan dengan <b>ROC AUC = {best_overall['roc_auc']:.4f}</b> dan
-                    <b>Accuracy = {best_overall['accuracy']*100:.2f}%</b>.<br><br>
-                    2. <b>Berdasarkan Sensitivitas Deteksi Churn (Recall):</b> Penerapan <b>SMOTE pada data train</b> meningkatkan
-                    <i>Recall</i> kelas churn secara signifikan: pada <b>Gradient Boosting</b> naik dari <b>{gb_b['recall_churn']*100:.2f}%</b>
-                    menjadi <b>{gb_a['recall_churn']*100:.2f}%</b> (AUC = {gb_a['roc_auc']:.4f}), dan pada <b>Random Forest</b> naik dari
-                    <b>{rf_b['recall_churn']*100:.2f}%</b> menjadi <b>{rf_a['recall_churn']*100:.2f}%</b> (AUC = {rf_a['roc_auc']:.4f}).
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with c_obj3:
-        st.markdown(
-            f"""
-            <div class="info-card" style="border-top: 4px solid {COLORS['gold']}; height: 100%;">
-                <h4>🚀 Jawaban Objective (c): Implementasi untuk Pertumbuhan Bisnis</h4>
-                <p>
-                    1. <b>Early Warning System (Sistem Peringatan Dini):</b> Mengintegrasikan model prediktif ke dalam sistem CRM bank
-                    untuk memberi skor risiko <i>churn</i> bulanan pada setiap nasabah aktif.<br><br>
-                    2. <b>Intervensi Terfokus pada Segmen Berisiko Tinggi:</b> Memfokuskan anggaran kampanye retensi Divisi Marketing pada
-                    nasabah berusia <b>41–60 tahun</b>, nasabah perempuan, serta nasabah dengan rasio <code>Credit Score Given Age</code>
-                    rendah melalui produk pensiun/investasi yang lebih kompetitif dan layanan <i>Relationship Manager</i> khusus.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    render_section_title("2. Profil Risiko Churn Berdasarkan Kelompok Usia (Data Aktual)")
-    st.dataframe(
-        seg_summary[["Kelompok Usia", "Total_Nasabah", "Jumlah_Churn", "Churn Rate (%)"]].rename(
-            columns={"Total_Nasabah": "Total Nasabah", "Jumlah_Churn": "Jumlah Churn"}
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    # 3. Saran Panduan: Eksperimen Perbandingan Rasio SMOTE (1:1 vs sekitar 60:40)
-    render_section_title("3. Saran Pengembangan Metodologi: Eksperimen Rasio SMOTE 1:1 (50:50) vs 60:40")
+    render_section_title("3. Narasi Faktor yang Paling Berpengaruh Berdasarkan Hasil Aktual")
     st.markdown(
         f"""
-        <div class="info-card">
-            <h4>🧪 Mengapa Mencoba Rasio SMOTE 60:40?</h4>
+        <div class="info-card" style="border-left: 5px solid {COLORS['teal']};">
+            <h4>📌 Interpretasi Hasil Aktual Feature Importance vs Korelasi EDA</h4>
             <p>
-                Pada panduan Final Project DigitalSkola, disarankan untuk mencoba pengaturan rasio <i>oversampling</i> <b>SMOTE sekitar 60:40</b>
-                (<code>sampling_strategy = 0.6667</code>, di mana kelas minoritas disintesis hingga mencapai 40% dari total data latih dan
-                kelas mayoritas tetap dominan sebesar 60%). Tujuannya adalah menjaga keseimbangan alami agar model tidak terlalu agresif
-                menghasilkan <i>False Positive</i>, sehingga <b>Accuracy</b> dan <b>Precision</b> tetap terjaga tinggi sembari mempertahankan
-                peningkatan <b>Recall</b> dan <b>ROC AUC</b>.
+                1. <b>Dominasi Fitur Kontinu &amp; Fitur Hasil Rekayasa:</b> Pada skenario <b>{fi_scen_choice}</b>, empat fitur dengan
+                kontribusi terbesar adalah <b>{top1_name} ({top1_val*100:.2f}%)</b>, <b>{top2_name} ({top2_val*100:.2f}%)</b>,
+                <b>{top3_name} ({top3_val*100:.2f}%)</b>, dan <b>{top4_name} ({top4_val*100:.2f}%)</b>. Keempat atribut kontinu ini
+                menyumbang lebih dari <b>96%</b> total penurunan <i>Gini Impurity</i> pada pohon keputusan Random Forest.<br><br>
+                2. <b>Perubahan Peringkat Sebelum vs Sesudah SMOTE:</b><br>
+                • <b>Sebelum SMOTE:</b> <code>EstimatedSalary</code> (34,47%) dan <code>Credit Score Given Age</code> (26,65%) menempati urutan
+                teratas karena pohon keputusan banyak melakukan pemisahan pada nilai desimal kontinu yang rapat, disusul <code>CreditScore</code> (20,76%) dan <code>Age</code> (16,13%).<br>
+                • <b>Sesudah SMOTE (1:1):</b> Ketika kedua kelas diseimbangkan, <b><code>Age</code> naik menjadi fitur paling penting nomor 1 (27,63%)</b>,
+                diikuti ketat oleh <b><code>Credit Score Given Age</code> (25,79%)</b>, <code>EstimatedSalary</code> (24,49%), dan <code>CreditScore</code> (18,93%).<br><br>
+                3. <b>Mengapa <code>Gender_Male</code> &amp; <code>HasCrCard</code> Bobotnya Kecil di Pohon Keputusan?</b><br>
+                Variabel biner (0/1) hanya memiliki satu titik potong (<i>split point</i>), berbeda dengan variabel kontinu yang memiliki ratusan
+                titik potong di sepanjang cabang pohon. Namun, sebagaimana dibuktikan pada tahap EDA, <b>Usia (Age)</b>, rasio
+                <b>Credit Score Given Age</b>, dan <b>Gender (Perempuan)</b> merupakan faktor pembeda risiko churn paling nyata secara arah bisnis.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    smote_view_mode = st.selectbox(
-        "Pilih Mode Perbandingan Rasio SMOTE untuk Ditampilkan:",
-        options=[
-            "Perbandingan Lengkap (Sebelum SMOTE vs SMOTE 1:1 vs SMOTE 60:40)",
-            "Fokus SMOTE 60:40 (Mayoritas 60% : Minoritas 40%)",
-            "Fokus SMOTE 1:1 (Seimbang 50% : 50%)",
-        ],
-        index=0,
-    )
-
-    dist_60_40 = metrics_payload["split_info"]["train_class_dist_smote_60_40"]
-    tot_60_40 = dist_60_40["0"] + dist_60_40["1"]
-    dist_1_1 = metrics_payload["split_info"]["train_class_dist_smote_1_1"]
-    tot_1_1 = dist_1_1["0"] + dist_1_1["1"]
-
-    dcol1, dcol2 = st.columns(2)
-    with dcol1:
-        render_kpi_card(
-            "Komposisi Data Train — SMOTE 1:1 (50:50)",
-            f"{tot_1_1:,} Baris",
-            f"Retained (0): {dist_1_1['0']:,} (50.0%) | Churn (1): {dist_1_1['1']:,} (50.0%)",
-            "teal",
-        )
-    with dcol2:
-        pct_0 = dist_60_40["0"] / tot_60_40 * 100
-        pct_1 = dist_60_40["1"] / tot_60_40 * 100
-        render_kpi_card(
-            "Komposisi Data Train — SMOTE 60:40",
-            f"{tot_60_40:,} Baris",
-            f"Retained (0): {dist_60_40['0']:,} ({pct_0:.1f}%) | Churn (1): {dist_60_40['1']:,} ({pct_1:.1f}%)",
-            "gold",
-        )
-
-    df_all_scen = build_comparison_dataframe(metrics_payload, include_60_40=True)
-    if smote_view_mode == "Fokus SMOTE 60:40 (Mayoritas 60% : Minoritas 40%)":
-        df_show = df_all_scen[df_all_scen["Skenario"] == "Sesudah SMOTE (60:40)"]
-    elif smote_view_mode == "Fokus SMOTE 1:1 (Seimbang 50% : 50%)":
-        df_show = df_all_scen[df_all_scen["Skenario"] == "Sesudah SMOTE (1:1)"]
-    else:
-        df_show = df_all_scen
-
-    st.dataframe(
-        df_show.style.highlight_max(
-            subset=["Accuracy", "Precision (Churn)", "Recall (Churn)", "F1-Score (Churn)", "ROC AUC"],
-            color="#FEF3C7",
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    roc_sm1, roc_sm60 = st.columns(2)
-    with roc_sm1:
-        st.plotly_chart(
-            plot_combined_roc_curve(metrics_payload["after_smote_1_1"], "SMOTE Rasio 1:1 (50:50)"),
-            use_container_width=True,
-        )
-    with roc_sm60:
-        st.plotly_chart(
-            plot_combined_roc_curve(metrics_payload["after_smote_60_40"], "SMOTE Rasio 60:40"),
-            use_container_width=True,
-        )
-
-    gb_60 = metrics_payload["after_smote_60_40"]["Gradient Boosting"]
-    gb_11 = metrics_payload["after_smote_1_1"]["Gradient Boosting"]
-    rf_60 = metrics_payload["after_smote_60_40"]["Random Forest"]
-    rf_11 = metrics_payload["after_smote_1_1"]["Random Forest"]
-
-    render_insight_box(
-        f"Hasil eksperimen membuktikan saran panduan sangat tepat! Dengan mengubah rasio SMOTE dari <b>1:1</b> menjadi <b>60:40</b>: "
-        f"pada <b>Gradient Boosting</b>, <i>Accuracy</i> meningkat dari <b>{gb_11['accuracy']*100:.2f}%</b> menjadi <b>{gb_60['accuracy']*100:.2f}%</b>, "
-        f"<i>F1-Score (Churn)</i> naik dari <b>{gb_11['f1_churn']:.4f}</b> menjadi <b>{gb_60['f1_churn']:.4f}</b>, dan <i>ROC AUC</i> naik menjadi "
-        f"<b>{gb_60['roc_auc']:.4f}</b>. Begitu pula pada <b>Random Forest</b>, <i>Accuracy</i> meningkat dari <b>{rf_11['accuracy']*100:.2f}%</b> "
-        f"menjadi <b>{rf_60['accuracy']*100:.2f}%</b> dan <i>ROC AUC</i> naik dari <b>{rf_11['roc_auc']:.4f}</b> menjadi <b>{rf_60['roc_auc']:.4f}</b>."
-    )
-
 
 # ===========================================================================
-# HALAMAN 7: PREDIKSI NASABAH (HALAMAN TAMBAHAN INTERAKTIF)
+# HALAMAN 6: PREDIKSI NASABAH
 # ===========================================================================
-elif selected_page == "7. Prediksi Nasabah":
+elif selected_page == "6. Prediksi Nasabah":
     render_page_header(
-        title="7. Simulasi Prediksi Risiko Churn Nasabah",
+        title="6. Simulasi Prediksi Risiko Churn Nasabah",
         subtitle=(
-            "Masukkan profil demografis dan finansial nasabah untuk menghitung otomatis fitur Credit Score Given Age "
-            "dan memprediksi probabilitas churn menggunakan model Random Forest terbaik."
+            "Masukkan 5 atribut dasar nasabah (Gender, Age, CreditScore, EstimatedSalary, HasCrCard). "
+            "Fitur Credit Score Given Age dihitung otomatis untuk memprediksi probabilitas churn beserta rekomendasi retensi."
         ),
-        badge="Tahap 7 • Kalkulator Prediksi Real-Time",
+        badge="Tahap 6 • Kalkulator Prediksi Real-Time",
     )
 
     col_form, col_result = st.columns([1.05, 1.25])
 
     with col_form:
-        render_section_title("Formulir Profil Nasabah")
+        render_section_title("Formulir Input Profil Nasabah (5 Fitur Dasar)")
         with st.form("churn_prediction_form"):
             f_c1, f_c2 = st.columns(2)
             with f_c1:
                 gender_in = st.selectbox(
-                    "Jenis Kelamin (Gender)",
+                    "1. Jenis Kelamin (Gender)",
                     options=["Female", "Male"],
                     format_func=lambda g: "Perempuan (Female)" if g == "Female" else "Laki-laki (Male)",
                 )
                 age_in = st.number_input(
-                    "Usia Nasabah (Age - Tahun)",
+                    "2. Usia Nasabah (Age — Tahun)",
                     min_value=18,
                     max_value=95,
-                    value=45,
+                    value=46,
                     step=1,
                 )
                 has_card_in = st.selectbox(
-                    "Kepemilikan Kartu Kredit (HasCrCard)",
+                    "3. Kepemilikan Kartu Kredit (HasCrCard)",
                     options=[1, 0],
                     format_func=lambda v: "1 — Memiliki Kartu Kredit" if v == 1 else "0 — Tidak Memiliki Kartu Kredit",
                 )
             with f_c2:
                 credit_score_in = st.number_input(
-                    "Skor Kredit (CreditScore: 300 – 850)",
+                    "4. Skor Kredit (CreditScore: 300 – 850)",
                     min_value=300,
                     max_value=850,
                     value=580,
                     step=5,
                 )
                 salary_in = st.number_input(
-                    "Perkiraan Gaji Tahunan (EstimatedSalary - $)",
+                    "5. Perkiraan Gaji (EstimatedSalary — $)",
                     min_value=0.0,
                     max_value=500000.0,
                     value=101348.88,
@@ -1132,7 +986,7 @@ elif selected_page == "7. Prediksi Nasabah":
                         "Sebelum SMOTE",
                     ],
                     index=0,
-                    help="Default menggunakan model Random Forest terbaik dengan keseimbangan optimal.",
+                    help="Pilih skenario model Random Forest yang digunakan untuk menghitung probabilitas churn.",
                 )
 
             live_csga = float(credit_score_in) / float(age_in)
@@ -1141,13 +995,12 @@ elif selected_page == "7. Prediksi Nasabah":
                 f"`{credit_score_in} / {age_in}` = **{live_csga:.4f}**"
             )
 
-            submitted = st.form_submit_button(
-                "🔍 Prediksi Probabilitas Churn Nasabah",
+            st.form_submit_button(
+                "🔍 Hitung Probabilitas Churn Nasabah",
                 use_container_width=True,
                 type="primary",
             )
 
-    # Jalankan evaluasi prediksi secara langsung (baik saat awal halaman dibuka maupun saat tombol ditekan)
     try:
         pred_out = predict_customer_churn(
             pipeline_bundle=pipeline_bundle,
@@ -1163,37 +1016,46 @@ elif selected_page == "7. Prediksi Nasabah":
         st.stop()
 
     with col_result:
-        render_section_title("Hasil Prediksi & Rekomendasi Tindakan Retensi")
+        render_section_title("Hasil Prediksi & Kategori Risiko Churn")
         st.plotly_chart(plot_churn_probability_gauge(pred_out["prob_churn"]), use_container_width=True)
 
         r_c1, r_c2, r_c3 = st.columns(3)
+        accent_risk = (
+            "danger"
+            if pred_out["risk_category"] == "Tinggi"
+            else "gold"
+            if pred_out["risk_category"] == "Sedang"
+            else "teal"
+        )
         with r_c1:
             render_kpi_card(
                 "Probabilitas Churn",
                 f"{pred_out['prob_churn']*100:.2f}%",
-                f"Retensi: {pred_out['prob_retained']*100:.2f}%",
-                "danger" if pred_out["risk_category"] == "Tinggi" else "gold" if pred_out["risk_category"] == "Sedang" else "teal",
+                f"Probabilitas Bertahan: {pred_out['prob_retained']*100:.2f}%",
+                accent_risk,
             )
         with r_c2:
             render_kpi_card(
                 "Kategori Risiko",
                 f"Risiko {pred_out['risk_category']}",
-                "Ambang: <35% Rendah | 35-65% Sedang | >65% Tinggi",
-                "danger" if pred_out["risk_category"] == "Tinggi" else "gold" if pred_out["risk_category"] == "Sedang" else "teal",
+                "Rendah <35% | Sedang 35–65% | Tinggi >65%",
+                accent_risk,
             )
         with r_c3:
             render_kpi_card(
                 "Credit Score Given Age",
                 f"{pred_out['credit_score_given_age']:.2f}",
-                f"Skor {credit_score_in} / Usia {age_in} thn",
+                f"Otomatis ({credit_score_in} / {age_in})",
                 "navy",
             )
 
-        rec_items_html = "".join(f"<li style='margin-bottom:0.35rem;'>{item}</li>" for item in pred_out["recommendations"])
+        rec_items_html = "".join(
+            f"<li style='margin-bottom:0.35rem;'>{item}</li>" for item in pred_out["recommendations"]
+        )
         st.markdown(
             f"""
             <div class="info-card" style="border-left: 5px solid {pred_out['risk_color']};">
-                <h4>📋 Rekomendasi Tindakan Retensi (Kategori Risiko {pred_out['risk_category']})</h4>
+                <h4>📋 Saran Tindakan Retensi (Kategori Risiko {pred_out['risk_category']})</h4>
                 <ul style="margin: 0.4rem 0 0 1.1rem; padding: 0; font-size: 0.92rem; line-height: 1.55;">
                     {rec_items_html}
                 </ul>
@@ -1202,8 +1064,167 @@ elif selected_page == "7. Prediksi Nasabah":
             unsafe_allow_html=True,
         )
 
-    render_section_title("Vektor Fitur Input yang Diteruskan ke Model Random Forest")
+    render_section_title("Vektor Fitur yang Masuk ke Pipeline Model Random Forest")
     st.dataframe(pred_out["input_dataframe"], use_container_width=True, hide_index=True)
+
+
+# ===========================================================================
+# HALAMAN 7: KESIMPULAN DAN REKOMENDASI
+# ===========================================================================
+elif selected_page == "7. Kesimpulan & Rekomendasi":
+    render_page_header(
+        title="7. Kesimpulan dan Rekomendasi Bisnis",
+        subtitle=(
+            "Sintesis akhir yang menjawab ketiga objective bisnis berdasarkan angka aktual Dataset1_Customer_Churn.csv, "
+            "rekomendasi tindakan retensi per segmen nasabah, serta keterbatasan dataset."
+        ),
+        badge="Tahap 7 • Kesimpulan & Rekomendasi",
+    )
+
+    corr_after = df_fe.corr(numeric_only=True)
+    corr_age = float(corr_after.loc["Age", "Exited"])
+    corr_csga = float(corr_after.loc["Credit Score Given Age", "Exited"])
+    corr_gender = float(corr_after.loc["Gender_Male", "Exited"])
+
+    female_rate = float(df_raw[df_raw["Gender"] == "Female"]["Exited"].mean() * 100.0)
+    male_rate = float(df_raw[df_raw["Gender"] == "Male"]["Exited"].mean() * 100.0)
+    card1_rate = float(df_raw[df_raw["HasCrCard"] == 1]["Exited"].mean() * 100.0)
+    card0_rate = float(df_raw[df_raw["HasCrCard"] == 0]["Exited"].mean() * 100.0)
+
+    df_age_seg = df_raw.copy()
+    df_age_seg["Kelompok Usia"] = pd.cut(
+        df_age_seg["Age"],
+        bins=[0, 30, 40, 50, 60, 100],
+        labels=["≤ 30 Tahun", "31 – 40 Tahun", "41 – 50 Tahun", "51 – 60 Tahun", "> 60 Tahun"],
+    )
+    seg_summary = (
+        df_age_seg.groupby("Kelompok Usia", observed=False)["Exited"]
+        .agg(Total_Nasabah="count", Jumlah_Churn="sum", Churn_Rate="mean")
+        .reset_index()
+    )
+    seg_summary["Churn Rate (%)"] = (seg_summary["Churn_Rate"] * 100).round(2)
+    highest_risk_seg = seg_summary.sort_values("Churn Rate (%)", ascending=False).iloc[0]
+
+    gb_b = metrics_payload["before_smote"]["Gradient Boosting"]
+    gb_11 = metrics_payload["after_smote_1_1"]["Gradient Boosting"]
+    gb_60 = metrics_payload["after_smote_60_40"]["Gradient Boosting"]
+    rf_b = metrics_payload["before_smote"]["Random Forest"]
+    rf_11 = metrics_payload["after_smote_1_1"]["Random Forest"]
+    rf_60 = metrics_payload["after_smote_60_40"]["Random Forest"]
+
+    render_section_title("1. Kesimpulan Analisis (Menjawab Tiga Objective Bisnis)")
+    c_obj1, c_obj2, c_obj3 = st.columns(3)
+
+    with c_obj1:
+        st.markdown(
+            f"""
+            <div class="info-card" style="border-top: 4px solid {COLORS['navy']}; height: 100%;">
+                <h4>🔍 Objective (a): Faktor Paling Memengaruhi Churn</h4>
+                <p>
+                    1. <b>Usia (Age) &amp; Rasio Kredit per Usia:</b> Faktor penentu terkuat secara korelasi dan distribusi adalah
+                    <b>Age</b> (korelasi positif <b>r = {corr_age:.4f}</b>; median usia churn <b>45 tahun</b> vs retained <b>36 tahun</b>)
+                    serta fitur hasil rekayasa <b>Credit Score Given Age</b> (korelasi negatif <b>r = {corr_csga:.4f}</b>). Kelompok usia
+                    <b>{highest_risk_seg['Kelompok Usia']}</b> memiliki tingkat churn tertinggi hingga <b>{highest_risk_seg['Churn Rate (%)']:.2f}%</b>.<br><br>
+                    2. <b>Jenis Kelamin (Gender):</b> Nasabah perempuan memiliki churn rate jauh lebih tinggi (<b>{female_rate:.2f}%</b>)
+                    dibandingkan nasabah laki-laki (<b>{male_rate:.2f}%</b>) dengan korelasi <code>Gender_Male</code> sebesar <b>r = {corr_gender:.4f}</b>.<br><br>
+                    3. <b>Feature Importance Random Forest:</b> Pada model pasca-SMOTE, fitur kontinu <b>Age (27,63%)</b>,
+                    <b>Credit Score Given Age (25,79%)</b>, <b>EstimatedSalary (24,49%)</b>, dan <b>CreditScore (18,93%)</b> mendominasi
+                    daya pisah model, sedangkan <b>HasCrCard</b> terbukti bukan pembeda kuat (churn rate pemilik kartu <b>{card1_rate:.2f}%</b> vs non-pemilik <b>{card0_rate:.2f}%</b>).
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with c_obj2:
+        st.markdown(
+            f"""
+            <div class="info-card" style="border-top: 4px solid {COLORS['teal']}; height: 100%;">
+                <h4>🏆 Objective (b): Model Prediksi Paling Akurat</h4>
+                <p>
+                    1. <b>Model Terbaik Berdasarkan ROC AUC:</b> Algoritma <b>Gradient Boosting</b> unggul di seluruh skenario
+                    dengan <b>ROC AUC = {gb_b['roc_auc']:.4f}</b> (Accuracy <b>{gb_b['accuracy']*100:.2f}%</b>) sebelum SMOTE, disusul oleh
+                    <b>Random Forest</b> (ROC AUC = <b>{rf_b['roc_auc']:.4f}</b>, Accuracy <b>{rf_b['accuracy']*100:.2f}%</b>).<br><br>
+                    2. <b>Model Terbaik untuk Deteksi Churn (Recall &amp; F1):</b> Sebelum SMOTE, Recall churn sangat rendah
+                    ({gb_b['recall_churn']*100:.2f}% pada Gradient Boosting). Sesudah <b>SMOTE 1:1</b>, Recall churn melonjak ke
+                    <b>{gb_11['recall_churn']*100:.2f}%</b> (F1 = <b>{gb_11['f1_churn']:.4f}</b>, AUC = <b>{gb_11['roc_auc']:.4f}</b>).<br><br>
+                    3. <b>Keseimbangan Terbaik dengan SMOTE 60:40:</b> Rasio SMOTE 60:40 menghasilkan <b>F1-Score tertinggi ({gb_60['f1_churn']:.4f})</b>
+                    pada Gradient Boosting dengan <b>Accuracy {gb_60['accuracy']*100:.2f}%</b>, <b>Recall {gb_60['recall_churn']*100:.2f}%</b>, dan
+                    <b>ROC AUC {gb_60['roc_auc']:.4f}</b>.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with c_obj3:
+        st.markdown(
+            f"""
+            <div class="info-card" style="border-top: 4px solid {COLORS['gold']}; height: 100%;">
+                <h4>🚀 Objective (c): Pemanfaatan untuk Pertumbuhan Bisnis</h4>
+                <p>
+                    1. <b>Targeted Retention Campaign:</b> Mengalokasikan anggaran retensi Divisi Marketing secara presisi pada
+                    nasabah yang diprediksi berisiko tinggi (probabilitas &gt; 65%), terutama pada segmen usia <b>41–60 tahun</b>
+                    dan segmen nasabah perempuan.<br><br>
+                    2. <b>Optimalisasi Biaya Retensi:</b> Mengingat <code>HasCrCard</code> memiliki churn rate yang hampir identik
+                    antara pemilik dan non-pemilik kartu kredit, bank tidak perlu menghamburkan promosi kartu kredit massal untuk
+                    menekan churn, melainkan fokus pada produk manajemen kekayaan/pensiun bagi nasabah senior.<br><br>
+                    3. <b>Peningkatan Customer Lifetime Value (CLV):</b> Menekan laju churn dari {kpi_summary['churn_rate']:.2f}%
+                    secara bertahap akan menjaga dana pihak ketiga tetap stabil dan memperkuat pertumbuhan laba bank.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    render_section_title("2. Tabel Risiko Churn Berdasarkan Segmen Kelompok Usia (Data Aktual)")
+    st.dataframe(
+        seg_summary[["Kelompok Usia", "Total_Nasabah", "Jumlah_Churn", "Churn Rate (%)"]].rename(
+            columns={"Total_Nasabah": "Total Nasabah", "Jumlah_Churn": "Jumlah Churn"}
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    render_section_title("3. Rekomendasi Strategis & Keterbatasan Studi")
+    rec_col1, rec_col2 = st.columns(2)
+    with rec_col1:
+        st.markdown(
+            f"""
+            <div class="info-card" style="border-left: 5px solid {COLORS['teal']}; height: 100%;">
+                <h4>💡 Rekomendasi Konkret untuk Divisi Marketing</h4>
+                <p>
+                    • <b>Program Retensi Nasabah Usia Matang (41–60 Tahun):</b> Kelompok usia 51–60 tahun memiliki churn rate
+                    <b>56,21%</b> dan usia 41–50 tahun sebesar <b>33,97%</b>. Sediakan layanan <i>priority wealth management</i>,
+                    bunga deposito kompetitif, serta pendampingan <i>Relationship Manager</i> bagi segmen usia ini.<br><br>
+                    • <b>Program Loyalitas Segmen Perempuan:</b> Karena churn rate nasabah perempuan mencapai <b>{female_rate:.2f}%</b>
+                    (vs laki-laki <b>{male_rate:.2f}%</b>), rancang produk tabungan berhadiah, <i>cashback merchant</i> keluarga/gaya hidup,
+                    dan survei kepuasan berkala khusus segmen nasabah perempuan.<br><br>
+                    • <b>Pendampingan Nasabah dengan <code>Credit Score Given Age</code> Rendah:</b> Berikan edukasi finansial dan
+                    fasilitas restrukturisasi kredit ringan bagi nasabah berusia lanjut yang skor kreditnya menurun.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with rec_col2:
+        st.markdown(
+            f"""
+            <div class="info-card" style="border-left: 5px solid {COLORS['danger']}; height: 100%;">
+                <h4>⚠️ Keterbatasan Dataset &amp; Saran Pengembangan</h4>
+                <p>
+                    • <b>Keterbatasan Jumlah Fitur (Hanya 5 Fitur Prediktor Dasar):</b> Dataset <code>Dataset1_Customer_Churn.csv</code>
+                    hanya memuat 5 fitur input (<code>Gender, Age, CreditScore, EstimatedSalary, HasCrCard</code>) ditambah 1 fitur hasil
+                    rekayasa (<code>Credit Score Given Age</code>). Ketiadaan fitur aktivitas transaksi atau saldo rekening menyebabkan
+                    plafon ROC AUC maksimal berada di kisaran <b>0,77</b>.<br><br>
+                    • <b>Ketidakseimbangan Kelas Target (79,63% vs 20,37%):</b> Penggunaan SMOTE 1:1 meningkatkan Recall secara drastis
+                    namun menurunkan Precision dan Accuracy. Oleh karena itu, penggunaan <b>SMOTE rasio 60:40</b> serta penyesuaian
+                    <i>probability threshold</i> sangat disarankan saat implementasi produksi.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 # ===========================================================================
@@ -1213,53 +1234,56 @@ elif selected_page == "8. Tentang":
     render_page_header(
         title="8. Tentang Aplikasi & Metodologi",
         subtitle=(
-            "Ringkasan metodologi CRISP-DM, sumber panduan Final Project DigitalSkola, keterbatasan studi, "
-            "dan identitas pengembang."
+            "Dokumentasi sumber dataset Dataset1_Customer_Churn.csv, tahapan metodologi analisis DigitalSkola, "
+            "keterbatasan pemodelan, dan identitas pengembang."
         ),
-        badge="Tahap 8 • Dokumentasi & Kredit",
+        badge="Tahap 8 • Dokumentasi Proyek",
     )
 
     col_ab1, col_ab2 = st.columns([1.3, 1])
 
     with col_ab1:
-        render_section_title("Ringkasan Metodologi & Sumber Panduan")
+        render_section_title("Deskripsi Dataset & Metodologi Analisis")
         st.markdown(
             f"""
             <div class="info-card">
-                <h4>📚 Sumber Panduan Resmi</h4>
+                <h4>📂 Spesifikasi Dataset (<code>{DEFAULT_DATA_PATH}</code>)</h4>
                 <p>
-                    Aplikasi web ini dikembangkan untuk mereplikasi secara utuh alur analisis pada panduan
-                    <b>Final Project: "Bank Customer Churn"</b> yang disusun oleh <b>Datamine Team, DigitalSkola</b>.
-                    Seluruh metrik, tabel statistik, matriks korelasi, kurva ROC, dan tingkat kepentingan fitur
-                    dihitung secara langsung (<i>real-time/pre-computed</i>) dari dataset <code>data/Churn_Modelling.csv</code>
-                    ({len(df_raw):,} baris) tanpa adanya angka yang di-<i>hardcode</i>.
+                    Aplikasi ini menggunakan dataset resmi <b><code>Dataset1_Customer_Churn.csv</code></b> yang terdiri dari
+                    <b>{len(df_raw):,} baris</b> dan <b>{len(df_raw.columns)} kolom</b> tanpa nilai kosong (<i>0 missing values</i>)
+                    dan tanpa baris duplikat (<i>0 duplicates</i>):<br>
+                    • <code>CustomerId</code>: ID unik nasabah (dihapus sebelum pemodelan).<br>
+                    • <code>Gender</code>: Jenis kelamin nasabah (<code>Male</code> / <code>Female</code>).<br>
+                    • <code>Age</code>: Usia nasabah dalam tahun.<br>
+                    • <code>CreditScore</code>: Nilai skor kredit berdasarkan perilaku transaksi.<br>
+                    • <code>EstimatedSalary</code>: Perkiraan pendapatan tahunan nasabah.<br>
+                    • <code>HasCrCard</code>: Status kepemilikan kartu kredit (<code>0</code> = Tidak, <code>1</code> = Ya).<br>
+                    • <code>Exited</code>: Target status penutupan rekening (<code>0</code> = Retained, <code>1</code> = Churn).
                 </p>
-                <h4 style="margin-top: 1rem;">🔄 Tahapan Metodologi</h4>
+                <h4 style="margin-top: 1rem;">🔄 Ringkasan Alur Metodologi (Datamine Team, DigitalSkola)</h4>
                 <p>
-                    1. <b>Seleksi Kolom Wajib:</b> Menggunakan 7 atribut sesuai panduan (<code>CustomerId, Gender, Age, CreditScore, EstimatedSalary, HasCrCard, Exited</code>).<br>
-                    2. <b>Data Preparation & Encoding:</b> Menghapus <code>CustomerId</code> dan menerapkan <i>One-Hot Encoding</i> (<code>drop_first=True</code>) menghasilkan <code>Gender_Male</code>.<br>
-                    3. <b>Feature Engineering:</b> Menciptakan fitur rasio <code>Credit Score Given Age = CreditScore / Age</code>.<br>
-                    4. <b>Pemodelan & SMOTE Tanpa Data Leakage:</b> Membagi data dengan <code>train_test_split(test_size=0.25, random_state=42, stratify=y)</code> dan menerapkan <code>SMOTE</code> hanya pada data <i>train</i>.<br>
-                    5. <b>Evaluasi Komprehensif:</b> Membandingkan <i>Gradient Boosting, KNN, Random Forest,</i> dan <i>Decision Tree</i> pada data <i>test</i> baik sebelum SMOTE, sesudah SMOTE 1:1, maupun rasio SMOTE 60:40.
+                    1. <b>Business Understanding:</b> Penetapan 3 objective bisnis Divisi Marketing bank.<br>
+                    2. <b>Data Understanding &amp; Preparation:</b> Validasi kolom, <code>df.drop('CustomerId')</code>, pengecekan <code>info()</code>, <code>isnull().sum()</code>, dan <code>describe()</code>.<br>
+                    3. <b>EDA &amp; Feature Engineering:</b> Analisis proporsi vs jumlah absolut, encoding <code>pd.get_dummies(drop_first=True)</code> menghasilkan <code>Gender_Male</code>, serta pembuatan fitur <code>Credit Score Given Age = CreditScore / Age</code>.<br>
+                    4. <b>Modelling &amp; Evaluasi Bebas Data Leakage:</b> Split data 75:25 terstratifikasi (<code>random_state=42</code>), penerapan SMOTE (1:1 dan 60:40) <b>hanya pada data train</b>, dan evaluasi 4 algoritma pada <code>X_test</code>.
                 </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        render_section_title("Keterbatasan Analisis (Limitations)")
+        render_section_title("Keterbatasan Studi (Limitations)")
         st.markdown(
             f"""
             <div class="info-card" style="border-left: 4px solid {COLORS['danger']};">
-                <h4>⚠️ Keterbatasan Dataset & Ruang Lingkup</h4>
+                <h4>⚠️ Ruang Lingkup &amp; Keterbatasan</h4>
                 <p>
-                    • <b>Keterbatasan Jumlah Fitur (Hanya 5 Fitur Dasar):</b> Sesuai batasan metodologi panduan, analisis hanya menggunakan
-                    5 atribut prediktor awal (<code>Gender, Age, CreditScore, EstimatedSalary, HasCrCard</code>) ditambah 1 fitur rekayasa.
-                    Atribut perbankan lain seperti saldo rekening (<i>Balance</i>), jumlah produk (<i>NumOfProducts</i>), keaktifan anggota
-                    (<i>IsActiveMember</i>), dan wilayah geografis (<i>Geography</i>) tidak disertakan, yang membatasi plafon maksimal skor akurasi model.<br><br>
-                    • <b>Ketidakseimbangan Kelas Target (Class Imbalance):</b> Proporsi nasabah <i>churn</i> hanya sebesar
-                    <b>{kpi_summary['churn_rate']:.2f}%</b> berbanding <b>{kpi_summary['retained_rate']:.2f}%</b> nasabah bertahan,
-                    sehingga diperlukan kehati-hatian dalam memilih rasio <i>oversampling</i> SMOTE dan ambang batas keputusan (<i>threshold</i>).
+                    1. <b>Jumlah Fitur Terbatas (5 Fitur Prediktor):</b> Model hanya mengandalkan profil dasar nasabah
+                    (<code>Gender, Age, CreditScore, EstimatedSalary, HasCrCard</code>) beserta rasio <code>Credit Score Given Age</code>,
+                    sehingga variasi perilaku transaksi harian belum tertangkap sepenuhnya.<br>
+                    2. <b>Distribusi Kelas Tidak Seimbang:</b> Proporsi nasabah churn adalah <b>{kpi_summary['churn_rate']:.2f}%</b>
+                    ({kpi_summary['churn_count']:,} dari {kpi_summary['total_customers']:,} nasabah), sehingga pemilihan model harus
+                    mempertimbangkan <i>trade-off</i> antara <b>ROC AUC</b>, <b>Recall (Churn)</b>, dan <b>Accuracy</b> sesuai kebutuhan kampanye retensi bank.
                 </p>
             </div>
             """,
@@ -1267,33 +1291,34 @@ elif selected_page == "8. Tentang":
         )
 
     with col_ab2:
-        render_section_title("Profil Pengembang")
+        render_section_title("Identitas Pengembang")
         st.markdown(
             f"""
             <div class="info-card" style="border-top: 4px solid {COLORS['gold']};">
-                <h4>👤 Identitas Penyusun Proyek</h4>
+                <h4>👤 Profil Penyusun</h4>
                 <p>
                     • <b>Nama Lengkap:</b> <code>Afrizal Subagja</code> <span style="color:#6B7280;font-size:0.82rem;">([Nama Anda])</span><br>
                     • <b>NIM / ID Peserta:</b> <code>072926002</code> <span style="color:#6B7280;font-size:0.82rem;">([NIM])</span><br>
-                    • <b>Mata Kuliah / Program:</b> Pembelajaran Mesin (Machine Learning) / Data Science<br>
-                    • <b>Acuan Studi Kasus:</b> Final Project "Bank Customer Churn" — Datamine Team, DigitalSkola
+                    • <b>Mata Kuliah / Proyek:</b> Pembelajaran Mesin — Evaluasi Tengah Semester (ETS)<br>
+                    • <b>Referensi Metodologi:</b> Final Project "Bank Customer Churn" — Datamine Team, DigitalSkola
                 </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        render_section_title("Spesifikasi Teknis Aplikasi")
+        render_section_title("Stack Teknologi & Reprodusibilitas")
         st.markdown(
             """
             <div class="info-card">
-                <h4>🛠️ Stack Teknologi</h4>
+                <h4>🛠️ Spesifikasi Teknis</h4>
                 <p>
-                    • <b>Framework UI:</b> Streamlit &amp; Streamlit Option Menu<br>
-                    • <b>Pemrosesan Data:</b> Pandas &amp; NumPy<br>
+                    • <b>Framework Web:</b> Streamlit &amp; Streamlit Option Menu<br>
+                    • <b>Olahan Data:</b> Pandas &amp; NumPy<br>
                     • <b>Machine Learning:</b> Scikit-Learn &amp; Imbalanced-Learn (SMOTE)<br>
-                    • <b>Visualisasi Interaktif:</b> Plotly Express &amp; Graph Objects<br>
-                    • <b>Serialisasi Artefak:</b> Joblib (<code>rf_pipeline.pkl</code>) &amp; JSON (<code>metrics.json</code>)
+                    • <b>Visualisasi:</b> Plotly Express &amp; Plotly Graph Objects<br>
+                    • <b>Artefak Terkompresi:</b> Joblib (<code>model/rf_pipeline.pkl</code>) &amp; JSON (<code>model/metrics.json</code>)<br>
+                    • <b>Reprodusibilitas:</b> <code>random_state=42</code> pada seluruh proses split, SMOTE, dan model.
                 </p>
             </div>
             """,

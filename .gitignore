@@ -20,4 +20,4 @@ Thumbs.db
 
 # Temporary / local files
 *.log
-Churn_Modelling-selected-columns.csv
+/Dataset1_Customer_Churn.csv
