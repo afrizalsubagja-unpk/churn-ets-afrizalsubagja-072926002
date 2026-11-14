@@ -6,7 +6,11 @@ menggunakan dataset data/Dataset1_Customer_Churn.csv.
 
 import pandas as pd
 import streamlit as st
-from streamlit_option_menu import option_menu
+
+try:
+    from streamlit_option_menu import option_menu
+except ModuleNotFoundError:
+    option_menu = None
 
 from utils.charts import (
     plot_categorical_countplot,
@@ -114,30 +118,38 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    selected_page = option_menu(
-        menu_title=None,
-        options=MENU_OPTIONS,
-        icons=MENU_ICONS,
-        default_index=0,
-        styles={
-            "container": {"padding": "0!important", "background-color": "transparent"},
-            "icon": {"color": COLORS["gold"], "font-size": "15px"},
-            "nav-link": {
-                "font-size": "13.2px",
-                "text-align": "left",
-                "margin": "3px 0px",
-                "padding": "9px 12px",
-                "border-radius": "8px",
-                "color": "#F3F4F6",
-                "--hover-color": "rgba(255, 255, 255, 0.1)",
+    if option_menu is not None:
+        selected_page = option_menu(
+            menu_title=None,
+            options=MENU_OPTIONS,
+            icons=MENU_ICONS,
+            default_index=0,
+            styles={
+                "container": {"padding": "0!important", "background-color": "transparent"},
+                "icon": {"color": COLORS["gold"], "font-size": "15px"},
+                "nav-link": {
+                    "font-size": "13.2px",
+                    "text-align": "left",
+                    "margin": "3px 0px",
+                    "padding": "9px 12px",
+                    "border-radius": "8px",
+                    "color": "#F3F4F6",
+                    "--hover-color": "rgba(255, 255, 255, 0.1)",
+                },
+                "nav-link-selected": {
+                    "background-color": COLORS["teal"],
+                    "color": "#FFFFFF",
+                    "font-weight": "700",
+                },
             },
-            "nav-link-selected": {
-                "background-color": COLORS["teal"],
-                "color": "#FFFFFF",
-                "font-weight": "700",
-            },
-        },
-    )
+        )
+    else:
+        selected_page = st.radio(
+            "Navigasi Halaman",
+            options=MENU_OPTIONS,
+            index=0,
+            label_visibility="collapsed",
+        )
 
     st.markdown(
         f"""
