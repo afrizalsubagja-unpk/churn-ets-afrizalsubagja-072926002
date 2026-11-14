@@ -102,7 +102,7 @@ Aplikasi akan terbuka secara otomatis di peramban pada alamat `http://localhost:
 3. **Buat aplikasi baru:**
    Klik tombol **"Create app"** (atau **"New app"**) di pojok kanan atas.
 4. **Konfigurasi sumber aplikasi:**
-   - **Repository:** Pilih repository GitHub publik Anda (misalnya `username/churn-app`).
+   - **Repository:** Pilih repository GitHub publik Anda (`afrizalsubagja-unpk/churn-ets-afrizalsubagja-072926002`).
    - **Branch:** Pilih `main`.
    - **Main file path:** Ketik `app.py`.
 5. **Deploy:**
